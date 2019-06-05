@@ -19,6 +19,9 @@ Install the 64-bit version of the Microsoft Online Services Sign-in Assistant: M
 ---------------------------------------------------------
 
 ### AzureM365UserManagement.ps1
+Enables Administrators to connect to M365 and manage add users as well as assign licenses. This script also supports bulk additions/assignments via csv/txt file. Sample CSV included in project.
+
+![AzureM365UserManagement](./AzureM365UserManagement.jpg)
 
 **Menu Tree:**
 - Per User (One At A Time)
