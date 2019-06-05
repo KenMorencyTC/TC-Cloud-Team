@@ -2,10 +2,23 @@
 
 Transport Canada Cloud Operations Automation Tools &amp; Scripts
 
-**Required Module(s):**
-Install-Module -Name AzureAD
 
-AzureM365UserManagement.ps1
+## AZURE SCRIPTS
+
+**Required Module(s):**
+
+Install the 64-bit version of the Microsoft Online Services Sign-in Assistant: Microsoft Online Services Sign-in Assistant for IT Professionals RTW: 
+- https://www.microsoft.com/en-us/download/details.aspx?id=41950
+
+**Install the Microsoft Azure Active Directory Module for Windows PowerShell with these steps:**
+- Open an elevated Windows PowerShell command prompt (run Windows PowerShell as an administrator).
+- Run the **Install-Module MSOnline** command.
+- If prompted to install the NuGet provider, type Y and press ENTER.
+- If prompted to install the module from PSGallery, type Y and press ENTER.
+
+---------------------------------------------------------
+
+### AzureM365UserManagement.ps1
 
 **Menu Tree:**
 - Per User (One At A Time)
