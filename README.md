@@ -2,6 +2,9 @@
 
 Transport Canada Cloud Operations Automation Tools &amp; Scripts
 
+**Required Module(s):**
+Install-Module -Name AzureAD
+
 AzureM365UserManagement.ps1
 
 **Menu Tree:**
