@@ -134,7 +134,22 @@ function AssignLicense {
     Set-MsolUserLicense -UserPrincipalName $user_OCEmail -AddLicenses $user_SKU
     Write-Host "$license assigned to $user_OCEmail" @success_color
 }
+function RemoveLicense {
+    param (
+        [string]$email,
+        [string]$license = '034gc:ENTERPRISEPACK'
+    ) 
+    $user_prefix=$email.Split("@")[0]
+    $user_OCEmail=$user_prefix + $devops_email
+    $user_usgloc="CA"
+    $user_SKU=$license
 
+    #Write-Host "Set-MsolUser -UserPrincipalName `"$user_OCEmail`" -UsageLocation `"$user_usgloc`""
+    #Write-Host "Set-MsolUserLicense -UserPrincipalName `"$user_OCEmail`" -RemoveLicenses `"$user_SKU`""
+    Set-MsolUser -UserPrincipalName $user_OCEmail -UsageLocation $user_usgloc
+    Set-MsolUserLicense -UserPrincipalName $user_OCEmail -RemoveLicenses $user_SKU
+    Write-Host "$license assigned to $user_OCEmail" @success_color
+}
 function OpenFile
 {
     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
@@ -199,6 +214,35 @@ function Show-LicenseMenu
     Write-Host ""
     Write-Host "Choose License" @option_color
     Write-Host "1: Enter '1' No License"
+    Write-Host "2: Press '2' Microsoft 365 E3" #034gc:ENTERPRISEPACK
+    <# Write-Host "3: Enter '3' STREAM"
+    Write-Host "4: Enter '4' ENTERPRISEPACKWITHOUTPROPLUS"
+    Write-Host "5: Enter '5' DYN365_ENTERPRISE_CASE_MANAGEMENT"
+    Write-Host "6: Enter '6' DYN365_TEAM_MEMBERS"
+    Write-Host "7: Enter '7' ENTERPRISEPACK"
+    Write-Host "8: Enter '8' PROJECTESSENTIALS"
+    Write-Host "9: Enter '9' FLOW_FREE"
+    Write-Host "10: Enter '10' PROJECTPREMIUM"
+    Write-Host "11: Enter '11' Win10_VDA_E3"
+    Write-Host "12: Enter '12' FORMS_PRO"
+    Write-Host "13: Enter '13' POWERAPPS_VIRAL"
+    Write-Host "14: Enter '14' DYN365_ENTERPRISE_P1_IW"
+    Write-Host "15: Enter '15' MS_TEAMS_IW"
+    Write-Host "16: Enter '16' DYN365_ENTERPRISE_PLAN1"
+    Write-Host "17: Enter '17' POWER_BI_STANDARD"
+    Write-Host "18: Enter '18' OFFICESUBSCRIPTION"
+    Write-Host "19: Enter '19' EMS"
+    Write-Host "20: Enter '20' PROJECTPROFESSIONAL"
+    Write-Host "21: Enter '21' TEAMS_COMMERCIAL_TRIAL"
+    Write-Host "22: Enter '22' ATP_ENTERPRISE" #>
+    Write-Host "Q: Press 'Q' Quit"
+    Write-Host ""
+}
+function Show-RemoveLicenseMenu
+{
+    Write-Host ""
+    Write-Host "Choose License to Remove" @option_color
+    Write-Host "1: Enter '1' None"
     Write-Host "2: Press '2' Microsoft 365 E3" #034gc:ENTERPRISEPACK
     <# Write-Host "3: Enter '3' STREAM"
     Write-Host "4: Enter '4' ENTERPRISEPACKWITHOUTPROPLUS"
@@ -308,7 +352,7 @@ While ($iQuit -eq $false) {
                         $user_email = Read-Host
                         if ($user_email -ne '') {
                             if (ValidateEmail($user_email) -eq $true) {
-                                AddUser($user_email)
+                                Remove($user_email)
                                 Show-LicenseMenu
                                 Write-Host "Please make a selection" @success_color
                                 $mode_license = Read-Host
@@ -320,6 +364,37 @@ While ($iQuit -eq $false) {
                                     } '2' {
                                         #034gc:ENTERPRISEPACK
                                         AssignLicense($user_email, '034gc:ENTERPRISEPACK')
+                                    } 'q' {
+                                        $iQuit = $true
+                                    }
+                                }
+                            } else {
+                                Write-Host "Invalid Email Address: $user_email. Please try again." @error_color
+                            }
+                        } else {
+                            $isDone=$true
+                        }
+                    }
+                } '4' {
+                    #Remove License from User
+                    $isDone=$false
+                    while($isDone -eq $false){
+                        Write-Host ""
+                        Write-Host "Enter organization email address (ex. john.smith$depart_email) and hit Enter. Leave Blank to Finish." @select_color
+                        $user_email = Read-Host
+                        if ($user_email -ne '') {
+                            if (ValidateEmail($user_email) -eq $true) {
+                                Show-RemoveLicenseMenu
+                                Write-Host "Please make a selection" @success_color
+                                $mode_license = Read-Host
+                                switch ($mode_license)
+                                {
+                                    '1' {
+                                        #No License
+                                        Write-Host "No License Removed!" @error_color
+                                    } '2' {
+                                        #034gc:ENTERPRISEPACK
+                                        RemoveLicense($user_email, '034gc:ENTERPRISEPACK')
                                     } 'q' {
                                         $iQuit = $true
                                     }
