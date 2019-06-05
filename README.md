@@ -63,7 +63,7 @@ Enables Administrators to connect to M365 and manage add users as well as assign
 - ATP_ENTERPRISE
 
 **TODO**
-Refactor code
-Add support for more MSOL account features
-Command line arguments for silent running
+- Refactor code
+- Add support for more MSOL account features
+- Command line arguments for silent running
 
