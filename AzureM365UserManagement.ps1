@@ -2,7 +2,7 @@
 AzureM365UserManagement.ps1
 by Ken Morency <ken.morency@tc.gc.ca>
 from https://github.com/KenMorencyTC/TC-Cloud-Team-Automation-Scripting
-version 0.1b - June 4, 2019
+version 0.3b - June 6, 2019
 
 This program/script is free software: you can redistribute it and/or modify it under the terms of
 the GNU General Public License as published by the Free Software Foundation, either version
@@ -146,8 +146,8 @@ function RemoveLicense {
 
     #Write-Host "Set-MsolUser -UserPrincipalName `"$user_OCEmail`" -UsageLocation `"$user_usgloc`""
     #Write-Host "Set-MsolUserLicense -UserPrincipalName `"$user_OCEmail`" -RemoveLicenses `"$user_SKU`""
-    Set-MsolUser -UserPrincipalName $user_OCEmail -UsageLocation $user_usgloc
-    Set-MsolUserLicense -UserPrincipalName $user_OCEmail -RemoveLicenses $user_SKU
+    Set-MsolUser -UserPrincipalName "$user_OCEmail" -UsageLocation "$user_usgloc"
+    Set-MsolUserLicense -UserPrincipalName "$user_OCEmail" -RemoveLicenses "$user_SKU"
     Write-Host "$license assigned to $user_OCEmail" @success_color
 }
 function OpenFile
@@ -352,7 +352,6 @@ While ($iQuit -eq $false) {
                         $user_email = Read-Host
                         if ($user_email -ne '') {
                             if (ValidateEmail($user_email) -eq $true) {
-                                Remove($user_email)
                                 Show-LicenseMenu
                                 Write-Host "Please make a selection" @success_color
                                 $mode_license = Read-Host
@@ -363,6 +362,7 @@ While ($iQuit -eq $false) {
                                         Write-Host "No License Assigned!" @error_color
                                     } '2' {
                                         #034gc:ENTERPRISEPACK
+                                        AddUser($user_email)
                                         AssignLicense($user_email, '034gc:ENTERPRISEPACK')
                                     } 'q' {
                                         $iQuit = $true
