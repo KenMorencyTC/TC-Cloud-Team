@@ -24,18 +24,21 @@ Enables Administrators to connect to M365 and manage add users as well as assign
 ![AzureM365UserManagement](./AzureM365UserManagement.jpg)
 
 **Configuration:**
+```
 $app_title="==== AZURE/M365 USER & LICENSE MANAGEMENT ===="
 $dep_title="===== YOUR CUSTOM TITLE HERE ======"
 $depart_email="@ORGANIZATION.EMAILDOMAIN.HERE"    #Set your internal domain
 $devops_email="@M365.EMAILDOMAIN.HERE"            #Set your the email domain for M365 (if the same as internal, enter the same)
 $user_tmppwd = "PUT TEMP PWD HERE"                #Set the temporary password for new user account here
-
+```
+```
 **Customization:**
 $title_color = @{ForegroundColor = "cyan"}
 $option_color = @{ForegroundColor="blue"; BackgroundColor="white"}
 $success_color = @{ForegroundColor = "green"}
 $select_color = @{ForegroundColor = "cyan"}
 $error_color = @{ForegroundColor = "red"}
+```
 
 **Menu Tree:**
 - Per User (One At A Time)
