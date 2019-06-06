@@ -58,7 +58,7 @@ $error_color = @{ForegroundColor = "red"}
 - No License
 - Microsoft 365 E3
 
-**Hidden License Options:**
+**Hidden License Options:** (These can be unhidden any time) 
 - STREAM
 - ENTERPRISEPACKWITHOUTPROPLUS
 - DYN365_ENTERPRISE_CASE_MANAGEMENT
