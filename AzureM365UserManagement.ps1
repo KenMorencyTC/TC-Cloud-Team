@@ -110,12 +110,12 @@ function AddUser {
         [string]$email
     ) 
     $user_prefix=$email.Split("@")[0]
-    #$user_name=(Get-Culture).textinfo.totitlecase($user_prefix.replace("."," "))
-    #$user_TCEmail=$user_prefix + $depart_email
+    $user_name=(Get-Culture).textinfo.totitlecase($user_prefix.replace("."," "))
+    $user_TCEmail=$user_prefix + $depart_email
     $user_OCEmail=$user_prefix + $devops_email
 
     #Write-Host "New-MsolUser -UserPrincipalName `"$user_OCEmail`" -DisplayName `"$user_name`" -AlternateEmailAddresses `"$user_TCEmail`" -Password `"$user_tmppwd`""
-    New-MsolUser -UserPrincipalName $user_OCEmail -DisplayName '$user_name' -AlternateEmailAddresses $user_TCEmail -Password $user_tmppwd
+    New-MsolUser -UserPrincipalName "$user_OCEmail" -DisplayName "$user_name" -AlternateEmailAddresses "$user_TCEmail" -Password "$user_tmppwd"
     Write-Host "Account $user_OCEmail created with temporary password: $user_tmppwd" @success_color
 }
 function AssignLicense {
@@ -130,8 +130,8 @@ function AssignLicense {
 
     #Write-Host "Set-MsolUser -UserPrincipalName `"$user_OCEmail`" -UsageLocation `"$user_usgloc`""
     #Write-Host "Set-MsolUserLicense -UserPrincipalName `"$user_OCEmail`" -AddLicenses `"$user_SKU`""
-    Set-MsolUser -UserPrincipalName $user_OCEmail -UsageLocation $user_usgloc
-    Set-MsolUserLicense -UserPrincipalName $user_OCEmail -AddLicenses $user_SKU
+    Set-MsolUser -UserPrincipalName "$user_OCEmail" -UsageLocation "$user_usgloc"
+    Set-MsolUserLicense -UserPrincipalName "$user_OCEmail" -AddLicenses "$user_SKU"
     Write-Host "$license assigned to $user_OCEmail" @success_color
 }
 function RemoveLicense {
