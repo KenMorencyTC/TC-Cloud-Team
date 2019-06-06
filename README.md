@@ -31,8 +31,9 @@ $depart_email="@ORGANIZATION.EMAILDOMAIN.HERE"    #Set your internal domain
 $devops_email="@M365.EMAILDOMAIN.HERE"            #Set your the email domain for M365 (if the same as internal, enter the same)
 $user_tmppwd = "PUT TEMP PWD HERE"                #Set the temporary password for new user account here
 ```
-```
+
 **Customization:**
+```
 $title_color = @{ForegroundColor = "cyan"}
 $option_color = @{ForegroundColor="blue"; BackgroundColor="white"}
 $success_color = @{ForegroundColor = "green"}
