@@ -2,9 +2,9 @@
 
 # TC Cloud Solutions (Azure)
 
-This project will host the tools and templates to accelerate Microsoft Azure deployments.
+This project will host the tools and templates developed by Transport Canada to accelerate Microsoft Azure deployments.
 
-These tools and templates enable the GC's Cloud First direction and support for the GC Digital Standards.
+These tools and templates enable the adoption of GC's Cloud First direction and support for the GC Digital Standards.
 
 The users of this project will be Government of Canada employees deploying cloud-based workloads.
 
@@ -22,7 +22,11 @@ ______________________
 
 # Solutions infonuagique de TC (Azure)
 
-Outils et modèles pour accélérer la prestation de services du GC dans Azure.
+Ce projet hébergera les outils et modèles développés par Transport Canada pour accélérer les déploiements de Microsoft Azure.
+
+Ces outils et modèles permettent l’adoption de la direction Cloud First du GC et la prise en charge des normes numériques du GC.
+
+Les utilisateurs de ce projet seront les employés du gouvernement du Canada qui déploient des charges de travail dans le Cloud.
 
 ## Comment contribuer
 
