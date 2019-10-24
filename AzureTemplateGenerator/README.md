@@ -10,23 +10,23 @@ Running the AzureTemplateGenerator.ps1 script it will parse the excel file and g
 
 Currently generates:
 
-Policies (recommended policies inc. GoC PBMM)
-Log Analytics Workspaces (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OOB)
-Resource Groups (with policies assigned)
-Network Security Groups (fully configured with sample rules)
-Route Tables (with typical routing assigned)
-Virtual Networks (including peering)
-Application Gateway (with very basic configuration)
-Azure Firewall (preconfigured with several sample rules)
-Storage Accounts (for operations usage)
-Recovery Service Vaults (configured for both Azure Site Recovery and Backups)
+* Policies (recommended policies inc. GoC PBMM)
+* Log Analytics Workspaces (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OOB)
+* Resource Groups (with policies assigned)
+* Network Security Groups (fully configured with sample rules)
+* Route Tables (with typical routing assigned)
+* Virtual Networks (including peering)
+* Application Gateway (with very basic configuration)
+* Azure Firewall (preconfigured with several sample rules)
+* Storage Accounts (for operations usage)
+* Recovery Service Vaults (configured for both Azure Site Recovery and Backups)
 
 Coming Soon:
-Bastion Hosts
-Key Vaults
-DDOS
-VM Templates with hardened DSC configurations
-CICD Pipeline Samples
+* Bastion Hosts
+* Key Vaults
+* DDOS
+* VM Templates with hardened DSC configurations
+* CICD Pipeline Samples
 
 ## What do I do with this?
 
@@ -58,24 +58,24 @@ Ce projet est livré pré-préparé avec un exemple d'infrastructure réseau com
 
 Il fournit:
 
-Politiques (politiques recommandées inc. GdC PBMM)
-Log Analytics Workspaces (où tous les journaux sont accumulés pour la surveillance, entièrement appliqués à toutes les ressources réseau pour une journalisation complète OOB)
-Groupes de ressources (avec stratégies assignées)
-Groupes de sécurité réseau (entièrement configurés avec des exemples de règles)
-Tables de routage (avec routage typique attribué)
-Réseaux virtuels (y compris le peering)
-Application Gateway (avec configuration très basique)
-Pare-feu Azure (préconfiguré avec plusieurs exemples de règles)
-Comptes de stockage (pour l'utilisation des opérations)
-Coffres-forts du service de récupération (configurés pour Azure Site Recovery et les sauvegardes)
+* Politiques (politiques recommandées inc. GdC PBMM)
+* Log Analytics Workspaces (où tous les journaux sont accumulés pour la surveillance, entièrement appliqués à toutes les ressources réseau pour une journalisation complète OOB)
+* Groupes de ressources (avec stratégies assignées)
+* Groupes de sécurité réseau (entièrement configurés avec des exemples de règles)
+* Tables de routage (avec routage typique attribué)
+* Réseaux virtuels (y compris le peering)
+* Application Gateway (avec configuration très basique)
+* Pare-feu Azure (préconfiguré avec plusieurs exemples de règles)
+* Comptes de stockage (pour l'utilisation des opérations)
+* Coffres-forts du service de récupération (configurés pour Azure Site Recovery et les sauvegardes)
 
 Bientôt disponible:
 
-Hôtes Bastion
-Coffres à clés
-DDOS
-Modèles de machine virtuelle avec configurations DSC renforcées
-Échantillons de pipeline CICD
+* Hôtes Bastion
+* Coffres à clés
+* DDOS
+* Modèles de machine virtuelle avec configurations DSC renforcées
+* Échantillons de pipeline CICD
 
 ## Qu'est-ce que je fais avec ça?
 
