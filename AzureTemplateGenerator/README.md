@@ -32,7 +32,7 @@ CICD Pipeline Samples
 
 First off you will need to either create the azure subscriptions you see in the "SUB" worksheet and enter the corresponding IDs into the fields provided OR you will need to modify the entire sheet to suit the subscriptions you wish to use. 
 
-![readme_subs](./readme_subs.png)
+![readme_subs](./resources/readme_subs.png)
 
 Once you execute the generator you will find a new folder called "ARM" in your directory with several folders and files inside. At the root of this folder you will find a new script called "RUN-Full-Deploy-INF.ps1". 
 
