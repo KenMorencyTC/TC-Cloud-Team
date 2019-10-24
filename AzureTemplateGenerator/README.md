@@ -49,26 +49,26 @@ Alternatively, upload all the generated templates and PS scripts to a DevOps rep
 
 ## What do all the worksheet names mean?
 ```
-* SUB      - Your subscriptions
-* LAW      - Log Analytics Workspaces
-* RG       - Resource Groups
-* NSG      - Network Security groups
-* NSGRULES - The Rules used by individual NSGs
-* RT       - Route Tables
-* ROUTES   - Traffic Routes used by Route Tables
-* VNET     - Virtual Networks
-* SUBNET   - Subnets used within Virtual Networks
-* PEER     - VNET Peerings
-* AG       - Application Gateway
-* FW       - Azure Firewalls
-* FWAPP    - Application Rules for Firewall(s)
-* FWNAT    - NAT Rules for Firewall(s)
-* FWNET    - Network Rules for Firewall(s)
-* SA       - Storage Accounts
-* RSV      - Recovery Service Vaults
-* BCK      - Backup Policies for RSV
-* ASR      - Azure Site Recovery Settings
-* IP       - Unused by script but useful for managing your IP allocations (implement directly in SUBNET worksheet)
+SUB      - Your subscriptions
+LAW      - Log Analytics Workspaces
+RG       - Resource Groups
+NSG      - Network Security groups
+NSGRULES - The Rules used by individual NSGs
+RT       - Route Tables
+ROUTES   - Traffic Routes used by Route Tables
+VNET     - Virtual Networks
+SUBNET   - Subnets used within Virtual Networks
+PEER     - VNET Peerings
+AG       - Application Gateway
+FW       - Azure Firewalls
+FWAPP    - Application Rules for Firewall(s)
+FWNAT    - NAT Rules for Firewall(s)
+FWNET    - Network Rules for Firewall(s)
+SA       - Storage Accounts
+RSV      - Recovery Service Vaults
+BCK      - Backup Policies for RSV
+ASR      - Azure Site Recovery Settings
+IP       - Unused by script but useful for managing your IP allocations (implement in SUBNET worksheet)
 ```
 ## What is the license?
 
