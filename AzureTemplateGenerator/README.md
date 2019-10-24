@@ -8,6 +8,7 @@
 
 _More complete documentation is "COMING SOON"!_
 
+## What does this thing do?
 This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, including Disaster Recovery region with **Core, Prod and Non Prod Subscriptions**, which can be used or modified to suit your needs.
 
 Running the **AzureTemplateGenerator.ps1** script it will parse the excel file and generate all of the following for a brand new **Enterprise level PBMM Network Infrastructure** in Azure.
@@ -46,7 +47,30 @@ If you choose to execute this script it will execute, in order, all scripts and 
 
 Alternatively, upload all the generated templates and PS scripts to a DevOps repo and set up your own CICD build and release pipelines to manage your ongoing operations.
 
-## License
+## What do all the worksheet names mean?
+
+* SUB      - Your subscriptions
+* LAW      - Log Analytics Workspaces
+* RG       - Resource Groups
+* NSG      - Network Security groups
+* NSGRULES - The Rules used by individual NSGs
+* RT       - Route Tables
+* ROUTES   - Traffic Routes used by Route Tables
+* VNET     - Virtual Networks
+* SUBNET   - Subnets used within Virtual Networks
+* PEER     - VNET Peerings
+* AG       - Application Gateway
+* FW       - Azure Firewalls
+* FWAPP    - Application Rules for Firewall(s)
+* FWNAT    - NAT Rules for Firewall(s)
+* FWNET    - Network Rules for Firewall(s)
+* SA       - Storage Accounts
+* RSV      - Recovery Service Vaults
+* BCK      - Backup Policies for RSV
+* ASR      - Azure Site Recovery Settings
+* IP       - Unused by script but useful for managing your IP allocations (implement directly in SUBNET worksheet)
+
+## What is the license?
 
 Unless otherwise noted, the source code of this project is covered under Crown Copyright, Government of Canada, and is distributed under the [MIT License](LICENSE).
 
