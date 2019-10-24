@@ -39,6 +39,13 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
+
+    TODOs:
+    1. Add empty value handling procedure(s).
+    2. Add support for VM/Service resources.
+    3. Refactor Excel imports for efficiency.
+    4. Refactor Sheet processing for efficiency.
+    5. Complete integration of Core Network Infrastructure ASR/Backup Policies and Log Auditing Workspaces.
 .EXAMPLE
     .PS> .\GenerateTemplates.ps1 -filename "\NetworkInfrastructure.xlsx" -outputfolder "\TEMPLATES\"
 .EXAMPLE
@@ -48,7 +55,7 @@
 #>
 
 param (
-    [String] $filename = "$($PSScriptRoot)\TCNetworkInfrastructure.xlsx",
+    [String] $filename = "$($PSScriptRoot)\AzureNetworkInfrastructure.xlsx",
     [String] $outputfolder = "$($PSScriptRoot)\ARM\"
 ) 
 
@@ -57,16 +64,20 @@ param (
 $sScriptVersion = "1.0"
 $sScriptName = "GenerateARMTemplates"
 
-$sNSGOutPath = "$($outputfolder)01-NSG\"
-$sRTOutPath = "$($outputfolder)02-RT\"
-$sVNETOutPath = "$($outputfolder)03-VNET\"
-$sPEEROutPath = "$($outputfolder)04-PEER\"
-#$sAGWOutPath = "$($outputfolder)05-AGW\"
-$sFWOutPath = "$($outputfolder)06-FW\"
-#$sSAOutPath = "$($outputfolder)07-SA\"
-#$sLAWOutPath = "$($outputfolder)08-LAW\"
-#$sRSVBKPOutPath = "$($outputfolder)09-RSVBKP\"
-#$sRSVASROutPath = "$($outputfolder)10-RSVASR\"
+#$sPOLOutPath = "$($outputfolder)00-POL\"
+$sLAWOutPath = "$($outputfolder)01-LAW\"
+$sRGOutPath = "$($outputfolder)02-RG\"
+$sNSGOutPath = "$($outputfolder)03-NSG\"
+$sRTOutPath = "$($outputfolder)04-RT\"
+$sVNETOutPath = "$($outputfolder)05-VNET\"
+$sPEEROutPath = "$($outputfolder)06-PEER\"
+$sAGOutPath = "$($outputfolder)07-AG\"
+$sFWOutPath = "$($outputfolder)08-FW\"
+$sSAOutPath = "$($outputfolder)09-SA\"
+$sRSVOutPath = "$($outputfolder)10-RSV\"
+#$sBASTOutPath = "$($outputfolder)12-BAST\"
+#$sKVOutPath = "$($outputfolder)13-KV\"
+#$sDDOSOutPath = "$($outputfolder)14-DDOS\"
 
 Write-Output "$($sScriptName) $($sScriptVersion)"
 
@@ -235,8 +246,8 @@ Function parsePEERs() {
         $sPEERName = $sPEERName.Trim()
         #Check if current vnet is name matched with host vnet peer. (Ex. CORE-CACN-INTERNAL-VNET)
         if ($sVNETName -eq $sPEERName) {
-            $sSUBID = GetSubscriptionID($curPEER.REMOTESUB)
-            #Write-Host $sPEERName' '$sVNETName
+            $sREMOTESUBID = GetSubscriptionID($curPEER.REMOTESUB)
+            #Write-Output $sPEERName' '$sVNETName
             if ($iCount -gt 0) {
                 $sOutput += ',' #Add comma prefix if not 1st object.
             }
@@ -255,7 +266,7 @@ Function parsePEERs() {
                 "allowGatewayTransit": ' + $curPEER.ALLOWGATEWAYTRANSIT + ',
                 "useRemoteGateways": ' + $curPEER.USEREMOTEGATEWAYS + ',
                 "remoteVirtualNetwork": {
-                    "id": "[resourceId(''' + $sSUBID + ''', ''' + $curPEER.REMOTERESOURCEGROUPNAME + 
+                    "id": "[resourceId(''' + $sREMOTESUBID + ''', ''' + $curPEER.REMOTERESOURCEGROUPNAME + 
                         ''', ''Microsoft.Network/virtualNetworks'', ''' + $curPEER.REMOTEVIRTUALNETWORKNAME + ''')]"
                 }
                 }
@@ -269,8 +280,13 @@ Function parsePEERs() {
     
     #Each vnet peer host has it's own template thus requiring the write action here.
     New-Item -ItemType Directory -Force -Path $sPEEROutPath | Out-Null
-    $sOutJsonName = "$($sPEEROutPath)ARM-$($sVNETName)-PEER.json"
+    #$sOutJsonName = "$($sPEEROutPath)ARM-$($sVNETName)-PEER.json"
+    $sOutFileName = "ARM-$($sVNETName)-PEER.json"
+    $sOutJsonName = $($sPEEROutPath) + $sOutFileName
+    $sOutPSName = "$($sPEEROutPath)RUN-$($sVNETName)-PEER.ps1"
     $sOutput | Out-File $sOutJsonName -Force
+    $sPSOutput = BuildPowerShell $curVNET "$($sVNETName) Peering" $sOutFileName
+    $sPSOutput | Out-File $sOutPSName -Force
 
     return ($iCount - 1)
 }
@@ -426,6 +442,508 @@ Function parseFWs() {
     $sOutput += '}}]}'
     return $sOutput
 }
+Function parseSAs() {
+    param ($curSA)
+    #Set storage account template header JSON
+    $sOutput = '{
+        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {},
+        "variables": {},
+        "resources": [
+          {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "' + $curSA.STORAGEACCOUNTNAME + '",
+            "location": "' + $curSA.LOCATION + '",
+            "apiVersion": "2018-07-01",
+            "sku": {
+              "name": "' + $curSA.SKU + '"
+            },
+            "kind": "' + $curSA.KIND + '",
+            "properties": {}
+          }
+        ],
+        "outputs": {
+          "storageAccountName": {
+            "type": "string",
+            "value": "' + $curSA.STORAGEACCOUNTNAME + '"
+          }
+        }
+      }'
+    return $sOutput
+}
+Function parseAGs() {
+    param ($curAG)
+    #"resourceGroup": "' + $curFW.RESOURCEGROUPNAME + '",
+    #"subscriptionId": "' + $sSUBID + '",
+    #Set application gateway template header JSON
+    foreach ($curLAW in $sLAW) {
+      if ($curLAW.OMSWORKSPACENAME -eq $curAG.LAWNAME) {
+        $sLAWOutput = $curLAW.RESOURCEGROUPNAME
+      }
+    }
+
+    $sOutput = '{
+        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+        },
+        "variables": {
+          "subnetRef": "[resourceId(''Microsoft.Network/virtualNetworks/subnets'', ''' + $curAG.VIRTUALNETWORKNAME + ''', ''' + $curAG.SUBNETNAME + ''')]"
+        },
+        "resources": [
+          {
+            "apiVersion":"2018-08-01",
+            "type":"Microsoft.Network/publicIPAddresses",
+            "name":"' + $curAG.PUBLICIPNAME + '",
+            "location":"' + $curAG.LOCATION + '",
+            "sku":{
+               "name":"Standard"
+            },
+            "properties":{
+               "publicIPAllocationMethod":"Static"
+            }
+         },
+               {
+            "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
+            "name": "[concat(''' + $curAG.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
+            "apiVersion": "2017-05-01-preview",
+            "properties": {
+              "name": "[concat(''' + $curAG.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
+              "workspaceId": "[resourceId(''' + $sLAWOutput + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
+              "logs": [
+                {
+                  "category": "DDoSProtectionNotifications",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                },
+                {
+                  "category": "DDoSMitigationReports",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                }
+              ],
+              "metrics": [
+                {
+                  "category": "AllMetrics",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                }
+              ]
+            },
+            "dependsOn": [
+              "[resourceId(''Microsoft.Network/publicIPAddresses'', ''' + $curAG.PUBLICIPNAME + ''')]"
+            ]
+          },
+          {
+            "apiVersion":"2018-08-01",
+            "name":"' + $curAG.APPLICATIONGATEWAYNAME + '",
+            "type":"Microsoft.Network/applicationGateways",
+            "location":"' + $curAG.LOCATION + '",
+            "dependsOn":[
+              "' + $curAG.PUBLICIPNAME + '"
+            ],
+            "properties":{
+               "sku":{
+                  "name":"Standard_v2",
+                  "tier":"Standard_v2"
+               },
+               "autoscaleConfiguration":{
+                  "minCapacity":2
+               },
+               "gatewayIPConfigurations":[
+                  {
+                     "name":"appGatewayIpConfig",
+                     "properties":{
+                        "subnet":{
+                           "id":"[variables(''subnetRef'')]"
+                        }
+                     }
+                  }
+               ],
+               "frontendIPConfigurations":[
+                {
+                   "name":"appGatewayFrontendIP",
+                   "properties":{
+                      "PublicIPAddress":{
+                         "id":"[resourceid(''Microsoft.Network/publicIPAddresses'', ''' + $curAG.PUBLICIPNAME + ''')]"
+                      }
+                   }
+                }
+             ],
+               "frontendPorts":[
+                  {
+                     "name":"appGatewayFrontendPort",
+                     "properties":{
+                        "Port":80
+                     }
+                  }
+               ],
+               "backendAddressPools":[
+                  {
+                     "name":"appGatewayBackendPool",
+                     "properties":{
+                        "BackendAddresses":[{
+                          "IpAddress": "10.0.0.4"
+                        },
+                        {
+                          "IpAddress": "10.0.0.5"
+                        }]
+                     }
+                  }
+               ],
+               "backendHttpSettingsCollection":[
+                  {
+                     "name":"appGatewayBackendHttpSettings",
+                     "properties":{
+                        "Port":80,
+                        "Protocol":"Http",
+                        "CookieBasedAffinity":"Disabled"
+                     }
+                  }
+               ],
+               "httpListeners":[
+                  {
+                     "name":"appGatewayHttpListener",
+                     "properties":{
+                        "FrontendIpConfiguration":{
+                           "Id":"[resourceId(''Microsoft.Network/applicationGateways/frontendIPConfigurations'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''appGatewayFrontendIP'')]"
+                        },
+                        "FrontendPort":{
+                           "Id":"[resourceId(''Microsoft.Network/applicationGateways/frontendPorts'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''appGatewayFrontendPort'')]"
+                        },
+                        "Protocol":"Http"
+                     }
+                  }
+               ],
+               "requestRoutingRules":[
+                  {
+                     "Name":"rule1",
+                   "properties": {
+                     "RuleType": "Basic",
+                     "httpListener": {
+                       "id": "[resourceId(''Microsoft.Network/applicationGateways/httpListeners'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''appGatewayHttpListener'')]"
+                     },
+                     "backendAddressPool": {
+                       "id": "[resourceId(''Microsoft.Network/applicationGateways/backendAddressPools'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''appGatewayBackendPool'')]"
+                     },
+                     "backendHttpSettings": {
+                       "id": "[resourceId(''Microsoft.Network/applicationGateways/backendHttpSettingsCollection'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''appGatewayBackendHttpSettings'')]"
+                     }
+                   }
+                  }
+               ]
+            }
+         },
+         {
+          "apiVersion": "2017-05-01-preview",
+          "type": "Microsoft.Network/applicationgateways/providers/diagnosticSettings",
+          "name": "[concat(''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
+          "properties": {
+            "workspaceId": "[resourceId(''' + $sLAWOutput + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
+            "logs": [
+              {
+                "category": "ApplicationGatewayAccessLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              },
+              {
+                "category": "ApplicationGatewayPerformanceLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              },
+              {
+                "category": "ApplicationGatewayFirewallLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              }           
+            ],
+            "metrics": [
+              {
+                "category": "AllMetrics",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              }
+            ]
+          }
+        }
+        ]
+      }'
+
+    return $sOutput
+}
+Function parseRSVs() {
+    param ($curRSV) 
+    $sOutput = '
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2018-01-10",
+      "name": "' + $curRSV.VAULTNAME + '",
+      "location": "' + $curRSV.LOCATION + '",
+      "sku": {' + $curRSV.SKU + '},
+      "properties": {}
+    },'
+        #Write-Output $curRSV.ASR
+        if ($curRSV.ASR) {
+          $iASRCount = 0
+          $sOutput += '
+  {
+    "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticSettings",
+    "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",
+    "apiVersion": "2017-05-01-preview",
+    "properties": {
+      "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",          
+      "workspaceId": "[resourceId(''' + $curRSV.RESOURCEGROUPNAME + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curRSV.LAWNAME + ''')]",
+      "logs": ['
+          $tASR = $curRSV.ASR | Out-String
+          $aASR = $tASR.Split(",")
+          foreach ($curASR in $aASR) {
+            #Write-Output $curASR.ID
+            #$bUseASR = $false
+            foreach ($cASR in $sASR) {
+              #Write-Output "$($cASR) - $($curASR.POLICYID)"
+              $bUseASR = $false
+              if ($cASR.POLICYID -eq $curASR) {
+                  $bUseASR = $true
+              }
+              #Write-Output $bUseASR
+              if ($bUseASR -eq $true) {
+                if ($iASRCount -gt 0) {
+                    $sOutput += ','
+                }
+                $sOutput += '
+        {
+          "category": "' + $cASR.CATEGORY + '",
+          "enabled": ' + $cASR.ENABLED + ',
+          "retentionPolicy": {' + $cASR.RETENTIONPOLICY + '}
+        }'
+                $iASRCount += 1
+              }
+            }
+          }
+          $sOutput += '
+      ],
+      "metrics": [' + $curRSV.METRICS + ']
+          },
+          "dependsOn": [
+              "[resourceId(''Microsoft.RecoveryServices/vaults/'', ''' + $curRSV.VAULTNAME + ''')]"
+          ]
+    }'
+        }
+        if ($curRSV.BCK) {
+          if ($iASRCount -gt 0) {$sOutput += ","}
+          $iBCKCount = 0
+          $sOutput += '
+    {
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''' + $curRSV.POLICYNAME + ''')]",
+      "apiVersion": "2016-06-01",
+      "location": "' + $curRSV.LOCATION + '",
+      "dependsOn": [
+      "[concat(''Microsoft.RecoveryServices/vaults/'', ''' + $curRSV.VAULTNAME + ''')]"
+      ],
+      "properties": {'
+          $tBCK = $curRSV.BCK | Out-String
+          $aBCK = $tBCK.Split(",")
+          foreach ($curBCK in $aBCK) {
+            $bUseBCK = $false
+            foreach ($cBCK in $sBCK) {
+              #Write-Host $curBCK"-"$cBCK.POLICYID
+              if ($cBCK.POLICYID -eq $curBCK) {
+                  $bUseBCK = $true
+                  if ($bUseBCK -eq $true) {
+                    if ($iBCKCount -gt 0) {
+                        $sOutput += ','
+                    }
+                    $sOutput += '
+        "backupManagementType": "AzureIaasVM",
+        "instantRpRetentionRangeInDays": "' + $cBCK.INSTANTRETDAYS + '",
+        "schedulePolicy": {
+          "scheduleRunFrequency": "Daily",
+          "scheduleRunDays": null,
+          "scheduleRunTimes": [' + $cBCK.SCHEDULERUNTIMES + '],
+          "schedulePolicyType": "SimpleSchedulePolicy"
+        },
+        "retentionPolicy": {
+          "dailySchedule": {
+            "retentionTimes": [' + $cBCK.SCHEDULERUNTIMES + '],
+            "retentionDuration": {
+              "count": "' + $cBCK.RETDAILY + '",
+              "durationType": "Days"
+            }
+          },
+          "weeklySchedule": {
+            "daysOfTheWeek": [' + $cBCK.DAYS + '],
+            "retentionTimes": [' + $cBCK.SCHEDULERUNTIMES + '],
+            "retentionDuration": {
+              "count": "' + $cBCK.RETWEEKLY + '",
+              "durationType": "Weeks"
+            }
+          },
+          "monthlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": [' + $cBCK.SCHEDULERUNTIMES + '],
+            "retentionDuration": {
+              "count": "' + $cBCK.RETMONTHLY + '",
+              "durationType": "Months"
+            }
+          },
+          "yearlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "monthsOfYear": [' + $cBCK.MONTHS + '],
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": [' + $cBCK.SCHEDULERUNTIMES + '],
+            "retentionDuration": {
+              "count": "' + $cBCK.RETYEARLY + '",
+              "durationType": "Years"
+            }
+          },
+          "retentionPolicyType": "LongTermRetentionPolicy"
+        }
+      }
+    }'
+                    $iBCKCount += 1
+              }
+            }
+            }
+          }
+        }
+
+        $sOutput += '
+    ]
+  }'
+        return $sOutput
+}
+Function parseRGs() {
+  param ($curRG)
+  #Set resource group template header JSON
+  $sOutput = '{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {},
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2018-05-01",
+            "type": "Microsoft.Resources/resourceGroups",
+            "location": "' + $curRG.LOCATION + '",
+            "name": "' + $curRG.RESOURCEGROUPNAME + '",
+            "properties": {},
+            "tags": {
+                "Solution-name": "' + $curRG.TSOLUTIONNAME + '",
+                "Environment": "' + $curRG.SUB + '",
+                "Solution-version": "' + $curRG.TSOLUTIONVERSION + '",
+                "Cost-Center": "' + $curRG.TCOSTCENTER + '",
+                "Business-Unit": "' + $curRG.TBUSINESSUNIT + '",
+                "Project-Name": "' + $curRG.TPROJECTNAME + '",
+                "Tech-Owner": "' + $curRG.TTECHOWNER + '",
+                "Exp-Date": "' + $curRG.TEXPDATE + '",
+                "Sensitivity": "' + $curRG.TSENSITIVITY + '",
+                "BusinessValueRating": "' + $curRG.TVALUERATING + '",
+                "TechContact": "' + $curRG.TTECHCONTACT + '"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "name": "' + $curRG.RESOURCEGROUPNAME + ' Tag Policy Assignment v2",
+            "location": "CandaCentral",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
+            ],
+            "properties": {
+                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
+                "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policyDefinitions'', ''Tag Resources in core'')]",
+                "Solution-name": "' + $curRG.TSOLUTIONNAME + '",
+                "Environment": "' + $curRG.SUB + '",
+                "Solution-version": "' + $curRG.TSOLUTIONVERSION + '",
+                "Cost-Center": "' + $curRG.TCOSTCENTER + '",
+                "Business-Unit": "' + $curRG.TBUSINESSUNIT + '",
+                "Project-Name": "' + $curRG.TPROJECTNAME + '",
+                "Tech-Owner": "' + $curRG.TTECHOWNER + '",
+                "Exp-Date": "' + $curRG.TEXPDATE + '",
+                "Sensitivity": "' + $curRG.TSENSITIVITY + '",
+                "BusinessValueRating": "' + $curRG.TVALUERATING + '",
+                "TechContact": "' + $curRG.TTECHCONTACT + '"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "name": "' + $curRG.RESOURCEGROUPNAME + ' PBMM Policy for GoC",
+            "location": "' + $curRG.LOCATION + '",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
+            ],
+            "properties": {
+                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/89c6cddc-1c73-4ac1-b19c-54d1a15a42f2"
+                "assignIdentity": ""
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "name": "' + $curRG.RESOURCEGROUPNAME + ' Custom Ops Policy",
+            "location": "' + $curRG.LOCATION + '",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
+            ],
+            "properties": {
+                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
+                "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policyDefinitions'', ''GC PBMM Policy Set'')]",
+                "loganalytics": "/subscriptions/2a4beb17-e62e-4ded-9455-be61e92329e1/resourcegroups/core01-ops01-rgp/providers/microsoft.operationalinsights/workspaces/core01-law-main"
+            }
+        }
+    ],
+    "outputs": {}
+}'
+  return $sOutput
+}
 Function GetSubscriptionID {
     param ($sSubName)
     #Retrieve the Subscription ID from the SUB worksheet based on the Subscription name.
@@ -437,6 +955,46 @@ Function GetSubscriptionID {
     } 
     return $sSUBID
 }
+function Format-Json([Parameter(Mandatory, ValueFromPipeline)][String] $json) {
+  $indent = 0;
+  ($json -Split '\n' |
+    % {
+      if ($_ -match '[\}\]]') {
+        # This line contains  ] or }, decrement the indentation level
+        $indent--
+      }
+      $line = (' ' * $indent * 2) + $_.TrimStart().Replace(':  ', ': ')
+      if ($_ -match '[\{\[]') {
+        # This line contains [ or {, increment the indentation level
+        $indent++
+      }
+      $line
+  }) -Join "`n"
+}
+Function BuildPowerShell {
+  param ($curObj,$curName,$curFile,$curArgs)
+  $sSubID = GetSubscriptionID($curObj.SUB)
+  $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
+
+  Write-Output "Deploying ' + $curName + ' in ' + $curObj.RESOURCEGROUPNAME + '"
+  New-AzResourceGroupDeployment -ResourceGroupName "' + $curObj.RESOURCEGROUPNAME + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '" '
+
+  if ($curArgs) {$sOutput += $curArgs}
+
+  return $sOutput
+}
+Function BuildRGPowerShell {
+  param ($curObj,$curName,$curFile,$curArgs)
+  $sSubID = GetSubscriptionID($curObj.SUB)
+  $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
+
+  Write-Output "Deploying ' + $curName + ' in ' + $curObj.SUB + '"
+  New-AzDeployment -Name "' + $curObj.RESOURCEGROUPNAME + '" -Location "' + $curObj.LOCATION + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '" '
+
+  if ($curArgs) {$sOutput += $curArgs}
+
+  return $sOutput
+}
 
 #endregion Functions
 
@@ -444,6 +1002,14 @@ Function GetSubscriptionID {
 #Subscriptions
 $sSUB = Import-Excel $filename "SUB"
 "$($sSUB.Count) subscription(s) found."
+
+#Log Analytics Workspaces
+$sLAW = Import-Excel $filename "LAW" -DataOnly -ErrorAction SilentlyContinue
+"$($sLAW.Count) log analytics workspace(s) found."
+
+#Resource Groups
+$sRG = Import-Excel $filename "RG" -DataOnly -ErrorAction SilentlyContinue
+"$($sRG.Count) resource group(s) found."
 
 #Network Security Groups
 $sNSG = Import-Excel $filename "NSG" -DataOnly -ErrorAction SilentlyContinue
@@ -461,9 +1027,17 @@ $sVNET = Import-Excel $filename "VNET" -DataOnly -ErrorAction SilentlyContinue
 $sFW = Import-Excel $filename "FW" -DataOnly -ErrorAction SilentlyContinue
 "$($sFW.Count) firewall(s) found."
 
+#Storage Accounts
+$sSA = Import-Excel $filename "SA" -DataOnly -ErrorAction SilentlyContinue
+"$($sSA.Count) storage account(s) found."
+
 #Application Gateways
 $sAG = Import-Excel $filename "AG" -DataOnly -ErrorAction SilentlyContinue
 "$($sAG.Count) application gateway(s) found."
+
+#Recovery Service Vaults
+$sRSV = Import-Excel $filename "RSV" -DataOnly -ErrorAction SilentlyContinue
+"$($sRSV.Count) recovery service vault(s) found."
 
 #Network Security Group Rule Sets
 $sRULESET = Import-Excel $filename "NSGRULES" -DataOnly -ErrorAction SilentlyContinue
@@ -492,36 +1066,89 @@ $sFWNET = Import-Excel $filename "FWNET" -DataOnly -ErrorAction SilentlyContinue
 #Virtual Network Peerings
 $sPEER = Import-Excel $filename "PEER" -DataOnly -ErrorAction SilentlyContinue
 "$($sPEER.Count) virtual network peer(s) found."
+
+#Backup Profile
+$sBCK = Import-Excel $filename "BCK" -DataOnly -ErrorAction SilentlyContinue
+"$($sBCK.Count) backup profile(s) found."
+
+#Azure Site Recovery
+$sASR = Import-Excel $filename "ASR" -DataOnly -ErrorAction SilentlyContinue
+"$($sASR.Count) azure site recovery profile(s) found."
+
+
 #endregion Import-Excel
 
 foreach ($curSUB in $sSUB) {
     Write-Output "Processing $($curSUB.NAME) $($curSUB.ID)"
+
+    $iLAW = 0
+    foreach ($curLAW in $sLAW) {
+        if ($curLAW.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION OMSWORKSPACENAME RESOURCEGROUPNAME SKU
+            New-Item -ItemType Directory -Force -Path $sLAWOutPath | Out-Null
+            $sOutFileName = "ARM-$($curLAW.OMSWORKSPACENAME).json"
+            $sOutJsonName = $($sLAWOutPath) + $sOutFileName
+            $sOutPSName = "$($sLAWOutPath)RUN-$($curLAW.OMSWORKSPACENAME).ps1"
+            $sLAWOutput = Get-Content -Path "$($PSScriptRoot)\resources\ARM-LAW.json"
+            $sLAWOutput | Out-File $sOutJsonName -Force
+            $sArgs = '-omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.OMSWORKSPACENAME + '"'
+            $sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
+            $sLAWPSOutput | Out-File $sOutPSName -Force
+            $iLAW += 1
+        }
+    }
+    Write-Output "Generated $($iLAW) log analytics workspace templates"
+
+    $iRG = 0
+    foreach ($curRG in $sRG) {
+        if ($curRG.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION RESOURCEGROUPNAME TSOLUTIONNAME TSOLUTIONVERSION TCOSTCENTER TBUSINESSUNIT TPROJECTNAME TTECHOWNER TSENSITIVITY TVALUERATING TTECHCONTACT LAWNAME
+            New-Item -ItemType Directory -Force -Path $sRGOutPath | Out-Null
+            $sOutFileName = "ARM-$($curRG.RESOURCEGROUPNAME).json"
+            $sOutJsonName = $($sRGOutPath) + $sOutFileName
+            $sOutPSName = "$($sRGOutPath)RUN-$($curRG.RESOURCEGROUPNAME).ps1"
+            $sRGOutput = parseRGs($curRG)
+            $sRGOutput | Out-File $sOutJsonName -Force
+            $sRGPSOutput = BuildRGPowerShell $curRG $curRG.RESOURCEGROUPNAME $sOutFileName
+            $sRGPSOutput | Out-File $sOutPSName -Force
+            $iRG += 1
+        }
+    }
+    Write-Output "Generated $($iRG) resource group templates"
 
     $iNSG = 0
     foreach ($curNSG in $sNSG) {
         if ($curNSG.SUB -eq $curSUB.NAME) {
             # EXCELHEADERS: SUB REGION LOCATION NSGNAME RESOURCEGROUPNAME RULESET
             New-Item -ItemType Directory -Force -Path $sNSGOutPath | Out-Null
-            $sOutJsonName = "$($sNSGOutPath)ARM-$($curNSG.NSGNAME).json"
+            $sOutFileName = "ARM-$($curNSG.NSGNAME).json"
+            $sOutJsonName = $($sNSGOutPath) + $sOutFileName
+            $sOutPSName = "$($sNSGOutPath)RUN-$($curNSG.NSGNAME).ps1"
             $sNSGOutput = parseNSGs($curNSG)
             $sNSGOutput | Out-File $sOutJsonName -Force
+            $sNSGPSOutput = BuildPowerShell $curNSG $curNSG.NSGNAME $sOutFileName
+            $sNSGPSOutput | Out-File $sOutPSName -Force
             $iNSG += 1
         }
     }
-    Write-Output "Generated $($iNSG) network security group templates" 
+    Write-Output "Generated $($iNSG) network security group templates." 
 
     $iRT = 0
     foreach ($curRT in $sRT) {
         if ($curRT.SUB -eq $curSUB.NAME) {
             # EXCELHEADERS: SUB REGION LOCATION ROUTETABLENAME RESOURCEGROUPNAME
             New-Item -ItemType Directory -Force -Path $sRTOutPath | Out-Null
-            $sOutJsonName = "$($sRTOutPath)ARM-$($curRT.ROUTETABLENAME).json"
+            $sOutFileName = "ARM-$($curRT.ROUTETABLENAME).json"
+            $sOutJsonName = $($sRTOutPath) + $sOutFileName
+            $sOutPSName = "$($sRTOutPath)RUN-$($curRT.ROUTETABLENAME).ps1"
             $sRTOutput = parseRTs($curRT)
             $sRTOutput | Out-File $sOutJsonName -Force
+            $sRTPSOutput = BuildPowerShell $curRT $curRT.ROUTETABLENAME $sOutFileName
+            $sRTPSOutput | Out-File $sOutPSName -Force
             $iRT += 1
         }
     }
-    Write-Output "Generated $($iRT) route table templates"
+    Write-Output "Generated $($iRT) route table templates."
 
     $iVNET = 0
     $iPEERs = 0
@@ -529,36 +1156,110 @@ foreach ($curSUB in $sSUB) {
         if ($curVNET.SUB -eq $curSUB.NAME) {
             # EXCELHEADERS: SUB REGION LOCATION VIRTUALNETWORKNAME RESOURCEGROUPNAME ROUTETABLENAME NSGNAME
             New-Item -ItemType Directory -Force -Path $sVNETOutPath | Out-Null
-            $sOutJsonName = "$($sVNETOutPath)ARM-$($curVNET.VIRTUALNETWORKNAME).json"
+            $sOutFileName = "ARM-$($curVNET.VIRTUALNETWORKNAME).json"
+            $sOutJsonName = $($sRTOutPath) + $sOutFileName
+            $sOutPSName = "$($sVNETOutPath)RUN-$($curVNET.VIRTUALNETWORKNAME).ps1"
             $sVNETOutput = parseVNETs($curVNET)
             $sVNETOutput | Out-File $sOutJsonName -Force
+            $sVNETPSOutput = BuildPowerShell $curVNET $curVNET.VIRTUALNETWORKNAME $sOutFileName
+            $sVNETPSOutput | Out-File $sOutPSName -Force
             
             $iPEERs += parsePEERs $curVNET $curSUB
             $iVNET += 1
         }
     }
-    Write-Output "Generated $($iVNET) virtual network templates"
-    Write-Output "Generated $($iPEERs) virtual network peering templates"
+    Write-Output "Generated $($iVNET) virtual network templates."
+    Write-Output "Generated $($iPEERs) virtual network peering templates."
+
+    $iAG = 0
+    foreach ($curAG in $sAG) {
+        if ($curAG.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION APPLICATIONGATEWAYNAME RESOURCEGROUPNAME VIRTUALNETWORKNAME SUBNETNAME
+            New-Item -ItemType Directory -Force -Path $sAGOutPath | Out-Null
+            $sOutFileName = "ARM-$($curAG.APPLICATIONGATEWAYNAME).json"
+            $sOutJsonName = $($sAGOutPath) + $sOutFileName
+            $sOutPSName = "$($sAGOutPath)RUN-$($curAG.APPLICATIONGATEWAYNAME).ps1"
+            $sAGOutput = parseAGs($curAG)
+            $sAGOutput | Out-File $sOutJsonName -Force
+            $sAGPSOutput = BuildPowerShell $curAG $curAG.APPLICATIONGATEWAYNAME $sOutFileName
+            $sAGPSOutput | Out-File $sOutPSName -Force
+            $iAG += 1
+        }
+    }
+    Write-Output "Generated $($iAG) application gateway templates."
 
     $iFW = 0
     foreach ($curFW in $sFW) {
         if ($curFW.SUB -eq $curSUB.NAME) {
             # EXCELHEADERS: SUB REGION LOCATION FIREWALLNAME RESOURCEGROUPNAME VIRTUALNETWORKNAME PUBLICIPNAME IPADDRESS
             New-Item -ItemType Directory -Force -Path $sFWOutPath | Out-Null
-            $sOutJsonName = "$($sFWOutPath)ARM-$($curFW.FIREWALLNAME).json"
+            $sOutFileName = "ARM-$($curFW.FIREWALLNAME).json"
+            $sOutJsonName = $($sFWOutPath) + $sOutFileName
+            $sOutPSName = "$($sFWOutPath)RUN-$($curFW.FIREWALLNAME).ps1"
             $sFWOutput = parseFWs($curFW)
             $sFWOutput | Out-File $sOutJsonName -Force
+            $sFWPSOutput = BuildPowerShell $curFW $curFW.FIREWALLNAME $sOutFileName
+            $sFWPSOutput | Out-File $sOutPSName -Force
             $iFW += 1
         }
     }
-    Write-Output "Generated $($iFW) firewall templates"
+    Write-Output "Generated $($iFW) firewall templates."
 
-    foreach ($curAG in $sAG) {
-        if ($curAG.SUB -eq $curSUB.NAME) {
-            # EXCELHEADERS: SUB REGION LOCATION APPLICATIONGATEWAYNAME RESOURCEGROUPNAME VIRTUALNETWORKNAME SUBNETNAME
-            
+    $iRSV = 0
+    foreach ($curRSV in $sRSV) {
+        if ($curRSV.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION VAULTNAME TYPE RESOURCEGROUPNAME SKU METRICS ASR BCK LAWNAME
+            New-Item -ItemType Directory -Force -Path $sRSVOutPath | Out-Null
+            $sOutFileName = "ARM-$($curRSV.VAULTNAME).json"
+            $sOutJsonName = $($sRSVOutPath) + $sOutFileName
+            $sOutPSName = "$($sRSVOutPath)RUN-$($curRSV.VAULTNAME).ps1"
+            $sRSVOutput = parseRSVs($curRSV)
+            $sRSVOutput | Format-Json | Out-File $sOutJsonName -Force
+            $sRSVPSOutput = BuildPowerShell $curRSV $curRSV.VAULTNAME $sOutFileName
+            $sRSVPSOutput | Format-Json | Out-File $sOutPSName -Force
+            $iRSV += 1
         }
     }
+    Write-Output "Generated $($iRSV) recovery service vault templates."
+
+    $iSA = 0
+    foreach ($curSA in $sSA) {
+        if ($curSA.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION STORAGEACCOUNTNAME SKU RESOURCEGROUPNAME DESCRIPTION
+            New-Item -ItemType Directory -Force -Path $sSAOutPath | Out-Null
+            $sOutFileName = "ARM-$($curSA.STORAGEACCOUNTNAME).json"
+            $sOutJsonName = $($sSAOutPath) + $sOutFileName
+            $sOutPSName = "$($sSAOutPath)RUN-$($curSA.STORAGEACCOUNTNAME).ps1"
+            $sSAOutput = parseSAs($curSA)
+            $sSAOutput | Out-File $sOutJsonName -Force
+            $sSAPSOutput = BuildPowerShell $curSA $curSA.STORAGEACCOUNTNAME $sOutFileName
+            $sSAPSOutput | Out-File $sOutPSName -Force
+            $iSA += 1
+        }
+    }
+    Write-Output "Generated $($iSA) storage account templates" 
+
+
+
+    <#
+    $i = 0
+    foreach ($cur in $s) {
+        if ($cur.SUB -eq $curSUB.NAME) {
+            # EXCELHEADERS: SUB REGION LOCATION RESOURCEGROUPNAME
+            New-Item -ItemType Directory -Force -Path $sOutPath | Out-Null
+            $sOutFileName = "ARM-$($cur.).json"
+            $sOutJsonName = $($sOutPath) + $sOutFileName
+            $sOutPSName = "$($sOutPath)RUN-$($cur.).ps1"
+            $sOutput = parses($cur)
+            $sOutput | Out-File $sOutJsonName -Force
+            $sPSOutput = BuildPowerShell $cur $cur. $sOutFileName
+            $sPSOutput | Out-File $sOutPSName -Force
+            $i += 1
+        }
+    }
+    Write-Output "Generated $($i)  templates"
+    #>
+
 }
     
 exit
