@@ -1,12 +1,12 @@
-([Français](#gc-accelerateurs-azure))
+([Français](#gc-fr))
 
 # TC Azure Template Generator
 
 A kickstart for your PBMM Cloud!
 
-This solution gives users the ability to manage most network infrastructure settings and configurations from excel. Running the AzureTemplateGenerator.ps1 script it will parse the excel file and generate all of the following for a brand new Enterprise level PBMM Network Infrastructure in Azure.
+This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, with Core, Prod and Non Prod Subscriptions, which can be used or modified to suit your needs.
 
-This project comes pre-prepared with an entire sample network infrastructure, with Core, Prod and Non Prod Subscriptions, which can be used or modified to suit your needs.
+Running the AzureTemplateGenerator.ps1 script it will parse the excel file and generate all of the following for a brand new Enterprise level PBMM Network Infrastructure in Azure.
 
 Currently generates:
 
@@ -43,7 +43,7 @@ Unless otherwise noted, the source code of this project is covered under Crown C
 The Canada wordmark and related graphics associated with this distribution are protected under trademark law and copyright law. No permission is granted to use them outside the parameters of the Government of Canada's corporate identity program. For more information, see [Federal identity requirements](https://www.canada.ca/en/treasury-board-secretariat/topics/government-communications/federal-identity-requirements.html).
 
 ______________________
-
+(#gc-fr)
 # TC Générateur de modèles Azure
 
 Un kickstart pour votre cloud PBMM!
