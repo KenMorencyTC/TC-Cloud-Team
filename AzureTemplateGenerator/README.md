@@ -4,7 +4,7 @@
 
 **A kickstart for your PBMM Cloud!**
 
-This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, with **Core, Prod and Non Prod Subscriptions**, which can be used or modified to suit your needs.
+This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, including Disaster Recovery region with **Core, Prod and Non Prod Subscriptions**, which can be used or modified to suit your needs.
 
 Running the **AzureTemplateGenerator.ps1** script it will parse the excel file and generate all of the following for a brand new **Enterprise level PBMM Network Infrastructure** in Azure.
 
@@ -22,11 +22,13 @@ Currently generates:
 * **Recovery Service Vaults** (configured for both Azure Site Recovery and Backups)
 
 Coming Soon:
-* **Bastion Hosts
-* **Key Vaults
-* **DDOS
-* **VM Templates with hardened DSC configurations
-* **CICD Pipeline Samples
+* **Bastion Hosts**
+* **Key Vaults**
+* **DDOS**
+* **VM Templates with hardened DSC configurations**
+* **CICD Pipeline Samples**
+
+![diagram_overview](./resources/readme_diagram_overview.png)
 
 ## What do I do with this?
 
@@ -58,24 +60,24 @@ Ce projet est livré pré-préparé avec un exemple d'infrastructure réseau com
 
 Il fournit:
 
-* Politiques (politiques recommandées inc. GdC PBMM)
-* Log Analytics Workspaces (où tous les journaux sont accumulés pour la surveillance, entièrement appliqués à toutes les ressources réseau pour une journalisation complète OOB)
-* Groupes de ressources (avec stratégies assignées)
-* Groupes de sécurité réseau (entièrement configurés avec des exemples de règles)
-* Tables de routage (avec routage typique attribué)
-* Réseaux virtuels (y compris le peering)
-* Application Gateway (avec configuration très basique)
-* Pare-feu Azure (préconfiguré avec plusieurs exemples de règles)
-* Comptes de stockage (pour l'utilisation des opérations)
-* Coffres-forts du service de récupération (configurés pour Azure Site Recovery et les sauvegardes)
+* **Politiques** (politiques recommandées inc. GdC PBMM)
+* **Log Analytics Workspaces** (où tous les journaux sont accumulés pour la surveillance, entièrement appliqués à toutes les ressources réseau pour une journalisation complète OOB)
+* **Groupes de ressources** (avec stratégies assignées)
+* **Groupes de sécurité réseau** (entièrement configurés avec des exemples de règles)
+* **Tables de routage** (avec routage typique attribué)
+* **Réseaux virtuels** (y compris le peering)
+* **Application Gateway** (avec configuration très basique)
+* **Pare-feu Azure** (préconfiguré avec plusieurs exemples de règles)
+* **Comptes de stockage** (pour l'utilisation des opérations)
+* **Coffres-forts du service de récupération** (configurés pour Azure Site Recovery et les sauvegardes)
 
 Bientôt disponible:
 
-* Hôtes Bastion
-* Coffres à clés
-* DDOS
-* Modèles de machine virtuelle avec configurations DSC renforcées
-* Échantillons de pipeline CICD
+* **Hôtes Bastion**
+* **Coffres à clés**
+* **DDOS**
+* **Modèles de machine virtuelle avec configurations DSC renforcées**
+* **Échantillons de pipeline CICD**
 
 ## Qu'est-ce que je fais avec ça?
 
