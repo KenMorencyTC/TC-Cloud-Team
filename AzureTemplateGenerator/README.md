@@ -4,7 +4,7 @@
 
 **A kickstart for your PBMM Cloud!**
 
-**_NOTICE_**: _This is a work in progress and no waranty or guarantee is provided or implied. You will need to complete additional tasks in order to completely satisfy PBMM requirements and security controls._
+**_NOTICE_**: _This is a work in progress and no warranty or guarantee is provided or implied. You will need to complete additional tasks (configure monitoring, Active Directory, MFA, etc...) in order to completely satisfy PBMM requirements and security controls._
 
 _More complete documentation is "COMING SOON"!_
 
@@ -16,8 +16,8 @@ Running the **AzureTemplateGenerator.ps1** script it will parse the excel file a
 Currently generates:
 
 * **Policies** (recommended policies inc. GoC PBMM)
-* **Log Analytics Workspaces** (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OOB)
-* **Resource Groups** (with policies assigned)
+* **Log Analytics Workspaces** (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OoB and ready to receive workload logs)
+* **Resource Groups** (with PBMM policies assigned)
 * **Network Security Groups** (fully configured with sample rules)
 * **Route Tables** (with typical routing assigned)
 * **Virtual Networks** (including peering)
