@@ -48,7 +48,7 @@ If you choose to execute this script it will execute, in order, all scripts and 
 Alternatively, upload all the generated templates and PS scripts to a DevOps repo and set up your own CICD build and release pipelines to manage your ongoing operations.
 
 ## What do all the worksheet names mean?
-
+```
 * SUB      - Your subscriptions
 * LAW      - Log Analytics Workspaces
 * RG       - Resource Groups
@@ -69,7 +69,7 @@ Alternatively, upload all the generated templates and PS scripts to a DevOps rep
 * BCK      - Backup Policies for RSV
 * ASR      - Azure Site Recovery Settings
 * IP       - Unused by script but useful for managing your IP allocations (implement directly in SUBNET worksheet)
-
+```
 ## What is the license?
 
 Unless otherwise noted, the source code of this project is covered under Crown Copyright, Government of Canada, and is distributed under the [MIT License](LICENSE).
