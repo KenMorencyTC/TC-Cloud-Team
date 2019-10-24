@@ -2,43 +2,43 @@
 
 # TC Azure Template Generator
 
-A kickstart for your PBMM Cloud!
+**A kickstart for your PBMM Cloud!**
 
-This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, with Core, Prod and Non Prod Subscriptions, which can be used or modified to suit your needs.
+This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, with **Core, Prod and Non Prod Subscriptions**, which can be used or modified to suit your needs.
 
-Running the AzureTemplateGenerator.ps1 script it will parse the excel file and generate all of the following for a brand new Enterprise level PBMM Network Infrastructure in Azure.
+Running the **AzureTemplateGenerator.ps1** script it will parse the excel file and generate all of the following for a brand new **Enterprise level PBMM Network Infrastructure** in Azure.
 
 Currently generates:
 
-* Policies (recommended policies inc. GoC PBMM)
-* Log Analytics Workspaces (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OOB)
-* Resource Groups (with policies assigned)
-* Network Security Groups (fully configured with sample rules)
-* Route Tables (with typical routing assigned)
-* Virtual Networks (including peering)
-* Application Gateway (with very basic configuration)
-* Azure Firewall (preconfigured with several sample rules)
-* Storage Accounts (for operations usage)
-* Recovery Service Vaults (configured for both Azure Site Recovery and Backups)
+* **Policies** (recommended policies inc. GoC PBMM)
+* **Log Analytics Workspaces** (where all logs are accumulated for monitoring, fully applied to all networking resources for full logging OOB)
+* **Resource Groups** (with policies assigned)
+* **Network Security Groups** (fully configured with sample rules)
+* **Route Tables** (with typical routing assigned)
+* **Virtual Networks** (including peering)
+* **Application Gateway** (with very basic configuration)
+* **Azure Firewall** (preconfigured with several sample rules)
+* **Storage Accounts** (for operations usage)
+* **Recovery Service Vaults** (configured for both Azure Site Recovery and Backups)
 
 Coming Soon:
-* Bastion Hosts
-* Key Vaults
-* DDOS
-* VM Templates with hardened DSC configurations
-* CICD Pipeline Samples
+* **Bastion Hosts
+* **Key Vaults
+* **DDOS
+* **VM Templates with hardened DSC configurations
+* **CICD Pipeline Samples
 
 ## What do I do with this?
 
-First off you will need to either create the azure subscriptions you see in the "SUB" worksheet and enter the corresponding IDs into the fields provided OR you will need to modify the entire sheet to suit the subscriptions you wish to use. 
+First off you will need to either create the azure subscriptions you see in the **"SUB"** worksheet and enter the corresponding IDs into the fields provided **OR** you will need to modify the entire sheet to suit the subscriptions you wish to use. 
 
 ![readme_subs](./resources/readme_subs.png)
 
-Once you execute the generator you will find a new folder called "ARM" in your directory with several folders and files inside. At the root of this folder you will find a new script called "RUN-Full-Deploy-INF.ps1". 
+Once you execute the generator you will find a new folder called **"ARM"** in your directory with several folders and files inside. At the root of this folder you will find a new script called **"RUN-Full-Deploy-INF.ps1"**. 
 
 If you choose to execute this script it will execute, in order, all scripts and deploy all resources. This WILL take some time as certain resources, such as application gateways, take a fair number of minutes to provision.
 
-If you prefer you can, instead, take all the templates and PS scripts and upload them to a DevOps repo and set up your own CICD build and release pipelines to manage your ongoing operations.
+Alternatively, upload all the generated templates and PS scripts to a DevOps repo and set up your own CICD build and release pipelines to manage your ongoing operations.
 
 ## License
 
