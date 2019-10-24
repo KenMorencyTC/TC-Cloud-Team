@@ -30,6 +30,10 @@ CICD Pipeline Samples
 
 ## What do I do with this?
 
+First off you will need to either create the azure subscriptions you see in the "SUB" worksheet and enter the corresponding IDs into the fields provided OR you will need to modify the entire sheet to suit the subscriptions you wish to use. 
+
+![readme_subs](./readme_subs.png)
+
 Once you execute the generator you will find a new folder called "ARM" in your directory with several folders and files inside. At the root of this folder you will find a new script called "RUN-Full-Deploy-INF.ps1". 
 
 If you choose to execute this script it will execute, in order, all scripts and deploy all resources. This WILL take some time as certain resources, such as application gateways, take a fair number of minutes to provision.
@@ -43,7 +47,7 @@ Unless otherwise noted, the source code of this project is covered under Crown C
 The Canada wordmark and related graphics associated with this distribution are protected under trademark law and copyright law. No permission is granted to use them outside the parameters of the Government of Canada's corporate identity program. For more information, see [Federal identity requirements](https://www.canada.ca/en/treasury-board-secretariat/topics/government-communications/federal-identity-requirements.html).
 
 ______________________
-(#gc-fr)
+![#gc-fr]
 # TC Générateur de modèles Azure
 
 Un kickstart pour votre cloud PBMM!
