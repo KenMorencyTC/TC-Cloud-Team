@@ -4,7 +4,7 @@
 
 **A kickstart for your PBMM Cloud!**
 
-**__NOTICE__**: This is a work in progress and no waranty or guarantee is provided or implied. You will need to complete additional tasks in order to completely satisfy PBMM requirements and security controls.
+**_NOTICE_**: _This is a work in progress and no waranty or guarantee is provided or implied. You will need to complete additional tasks in order to completely satisfy PBMM requirements and security controls._
 
 This solution gives users the ability to manage most network infrastructure settings and configurations from excel. This project comes pre-prepared with an entire sample network infrastructure, including Disaster Recovery region with **Core, Prod and Non Prod Subscriptions**, which can be used or modified to suit your needs.
 
