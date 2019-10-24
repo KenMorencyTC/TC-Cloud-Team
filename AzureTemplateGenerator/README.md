@@ -28,7 +28,7 @@ Coming Soon:
 * **VM Templates with hardened DSC configurations**
 * **CICD Pipeline Samples**
 
-![diagram_overview](./resources/diagram_overview.png)
+![diagram_overview](./resources/readme_diagram_overview.png)
 
 ## What do I do with this?
 
