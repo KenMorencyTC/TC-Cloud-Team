@@ -37,7 +37,7 @@ Coming Soon:
 
 ## What do I do with this?
 
-First off you will need to either create the azure subscriptions you see in the **"SUB"** worksheet and enter the corresponding IDs into the fields provided **OR** you will need to modify the entire sheet to suit the subscriptions you wish to use. 
+First off you will need to either create the azure subscriptions you see in the **"SUB"** worksheet and enter the corresponding IDs into the fields provided **OR** you will need to modify the entire excel workbook to suit the subscriptions/infrastructure you wish to use. 
 
 ![readme_subs](./resources/readme_subs.png)
 
