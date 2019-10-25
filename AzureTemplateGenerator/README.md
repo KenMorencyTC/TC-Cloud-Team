@@ -4,7 +4,7 @@
 
 **A kickstart for your PBMM Cloud!**
 
-**_NOTICE_**: _This is a work in progress and no warranty or guarantee is provided or implied. You will need to complete additional tasks (configure monitoring, Active Directory, MFA, etc...) in order to completely satisfy PBMM requirements and security controls._
+**_NOTICE_**: _This is a work in progress and no warranty or guarantee is provided or implied. You will need to complete additional tasks (configure monitoring, Active Directory, MFA, etc...) in order to completely satisfy PBMM requirements and security controls for your SA&A._
 
 _More complete documentation is "COMING SOON"!_
 
@@ -69,6 +69,24 @@ RSV      - Recovery Service Vaults
 BCK      - Backup Policies for RSV
 ASR      - Azure Site Recovery Settings
 IP       - Unused by script but useful for managing your IP allocations (implement in SUBNET worksheet)
+```
+## How is network traffic regulated in the sample infrastructure?
+This is complicated! But it isn't all that bad. We'll keep this explanation simple:
+
+First Here's the naming convention for our resources: SUBNAME-REGION-RESOURCENAME-RESOURCETYPE
+Ex. CORE-CACN-EXTHUB-VNET or PROD-CAEA-EXTWORKLOAD-RGP
+
+The following illustrates the sample live environment in Canada Central region and not disaster recovery in Canada East region.
+
+```
+- All inbound external traffic (IE Internet) is routed to our CORE-CACN-EXTHUB-VNET. 
+- INBOUND Internet Traffic is managed by the Application Gateway and the Azure Firewall and ultimately routed either PROD-CACN-EXTWORKLOAD-VNET or NPRD-CACN-EXTWORKLOAD-VNET.
+- Only OUTBOUND traffic to the Internet is permitted from PROD-CACN-INTHUB-VNET and NPRD-CACN-INTHUB-VNET.
+- All INBOUND traffic destined for an INTWORKLOAD-VNET is IP restricted to GC IP(s). Please verify this IP list before deploying.
+- *NOTE: When SCED is provisioned for your department, you will likely need to make routing changes as all traffic is expected to go through the GC Cap provided by SSC.
+- Within each VNET there are of course subnets, route tables and network security groups which regulate pathing and security.
+- Our sample provides individual subnets in all four WORKLOAD VNETs for WEB, APP, DATA and MGMT.
+- An additional VNET peering is provided between Canada Central and Canada East on the CORE-CACN-INTHUB-VNET and CORE-CAEA-INTHUB-VNET in order to facilitate monitoring, maintenance and disaster recovery.
 ```
 ## What is the license?
 
