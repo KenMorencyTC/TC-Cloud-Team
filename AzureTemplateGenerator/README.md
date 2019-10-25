@@ -89,6 +89,7 @@ The following illustrates the sample live environment in Canada Central region a
 - Our sample provides individual subnets in all four WORKLOAD VNETs for WEB, APP, DATA and MGMT.
 - An additional VNET peering is provided between Canada Central and Canada East on the CORE-CACN-INTHUB-VNET and CORE-CAEA-INTHUB-VNET in order to facilitate monitoring, maintenance and disaster recovery.
 - ALL network security is configured on a DENY ALL basis. Exceptions can of course be entered on an as-needed basis.
+- CORE-CACN-GBLHUB-RGP is where Operations resources live. Ex. Log Analytics Workspace, Bastion Hosts, etc...
 ```
 ## What is the license?
 
