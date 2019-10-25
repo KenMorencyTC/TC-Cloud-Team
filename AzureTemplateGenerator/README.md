@@ -33,15 +33,19 @@ Coming Soon:
 * **VM Templates with hardened DSC configurations**
 * **CICD Pipeline Samples**
 
-![diagram_overview](./resources/readme_diagram_overview.png)
+![Network Diagram Overview](./resources/readme_diagram_overview.png)
 
 ## What do I do with this?
 
 First off you will need to either create the azure subscriptions you see in the **"SUB"** worksheet and enter the corresponding IDs into the fields provided **OR** you will need to modify the entire excel workbook to suit the subscriptions/infrastructure you wish to use. 
 
-![readme_subs](./resources/readme_subs.png)
+![Subscription Worksheet](./resources/readme_subs.png)
 
-Once you execute the generator you will find a new folder called **"ARM"** in your directory with several folders and files inside. At the root of this folder you will find a new script called **"RUN-Full-Deploy-INF.ps1"**. 
+Once you execute the generator you will find a new folder called **"ARM"** in your directory with several folders and files inside.
+![Powershell generation of scripts](./resources/readme_psgen.png)
+
+At the root of this folder you will find a new script called **"RUN-FullDeploy-INF.ps1"**. 
+![Powershell Deploy Scripts](./resources/readme_fulldeploy.png)
 
 If you choose to execute this script it will execute, in order, all scripts and deploy all resources. This WILL take some time as certain resources, such as application gateways, take a fair number of minutes to provision.
 
