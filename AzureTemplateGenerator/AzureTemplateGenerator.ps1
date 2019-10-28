@@ -3,7 +3,7 @@
 .SYNOPSIS
     Generate ARM Templates from Excel
 .DESCRIPTION
-    GoC tool to Generate ARM Templates for Azure Network Infrastructure from specially designed Excel file
+    GoC tool to Generate ARM Templates for PBMM Azure Network Infrastructure from specially designed Excel file
 .PARAMETER filename
     Specifies the Excel file containing the Azure parameters. Must be formatted according to spec.
 .PARAMETER outputfolder
@@ -47,11 +47,11 @@
     4. Refactor Sheet processing for efficiency.
     5. Complete integration of Core Network Infrastructure ASR/Backup Policies and Log Auditing Workspaces.
 .EXAMPLE
-    .PS> .\GenerateTemplates.ps1 -filename "\NetworkInfrastructure.xlsx" -outputfolder "\TEMPLATES\"
+    .PS> .\AzureTemplateGenerator.ps1 -filename "\NetworkInfrastructure.xlsx" -outputfolder "\TEMPLATES\"
 .EXAMPLE
-    .PS> .\GenerateTemplates.ps1 "\NetworkInfrastructure.xlsx" "\TEMPLATES\"
+    .PS> .\AzureTemplateGenerator.ps1 "\NetworkInfrastructure.xlsx" "\TEMPLATES\"
 .LINK
-    https://github.com/KenMorencyTC/TC-Cloud-Team-Automation-Scripting
+    https://github.com/KenMorencyTC/TC-Cloud-Team/tree/master/AzureTemplateGenerator
 #>
 
 param (
@@ -62,11 +62,11 @@ param (
 #region INIT
 
 $sScriptVersion = "1.0"
-$sScriptName = "GenerateARMTemplates"
+$sScriptName = "Azure Template Generator"
 
-#$sPOLOutPath = "$($outputfolder)00-POL\"
-$sLAWOutPath = "$($outputfolder)01-LAW\"
-$sRGOutPath = "$($outputfolder)02-RG\"
+$sPOLOutPath = "$($outputfolder)00-POL\"
+$sRGOutPath = "$($outputfolder)01-RG\"
+$sLAWOutPath = "$($outputfolder)02-LAW\"
 $sNSGOutPath = "$($outputfolder)03-NSG\"
 $sRTOutPath = "$($outputfolder)04-RT\"
 $sVNETOutPath = "$($outputfolder)05-VNET\"
@@ -861,87 +861,271 @@ Function parseRSVs() {
 Function parseRGs() {
   param ($curRG)
   #Set resource group template header JSON
-  $sOutput = '{
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.1",
-    "parameters": {},
-    "variables": {},
-    "resources": [
-        {
-            "apiVersion": "2018-05-01",
-            "type": "Microsoft.Resources/resourceGroups",
-            "location": "' + $curRG.LOCATION + '",
-            "name": "' + $curRG.RESOURCEGROUPNAME + '",
-            "properties": {},
-            "tags": {
-                "Solution-name": "' + $curRG.TSOLUTIONNAME + '",
-                "Environment": "' + $curRG.SUB + '",
-                "Solution-version": "' + $curRG.TSOLUTIONVERSION + '",
-                "Cost-Center": "' + $curRG.TCOSTCENTER + '",
-                "Business-Unit": "' + $curRG.TBUSINESSUNIT + '",
-                "Project-Name": "' + $curRG.TPROJECTNAME + '",
-                "Tech-Owner": "' + $curRG.TTECHOWNER + '",
-                "Exp-Date": "' + $curRG.TEXPDATE + '",
-                "Sensitivity": "' + $curRG.TSENSITIVITY + '",
-                "BusinessValueRating": "' + $curRG.TVALUERATING + '",
-                "TechContact": "' + $curRG.TTECHCONTACT + '"
-            }
-        },
-        {
-            "type": "Microsoft.Authorization/policyAssignments",
-            "name": "' + $curRG.RESOURCEGROUPNAME + ' Tag Policy Assignment v2",
-            "location": "CandaCentral",
-            "apiVersion": "2018-05-01",
-            "dependsOn": [
-                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
-            ],
-            "properties": {
-                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
-                "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policyDefinitions'', ''Tag Resources in core'')]",
-                "Solution-name": "' + $curRG.TSOLUTIONNAME + '",
-                "Environment": "' + $curRG.SUB + '",
-                "Solution-version": "' + $curRG.TSOLUTIONVERSION + '",
-                "Cost-Center": "' + $curRG.TCOSTCENTER + '",
-                "Business-Unit": "' + $curRG.TBUSINESSUNIT + '",
-                "Project-Name": "' + $curRG.TPROJECTNAME + '",
-                "Tech-Owner": "' + $curRG.TTECHOWNER + '",
-                "Exp-Date": "' + $curRG.TEXPDATE + '",
-                "Sensitivity": "' + $curRG.TSENSITIVITY + '",
-                "BusinessValueRating": "' + $curRG.TVALUERATING + '",
-                "TechContact": "' + $curRG.TTECHCONTACT + '"
-            }
-        },
-        {
-            "type": "Microsoft.Authorization/policyAssignments",
-            "name": "' + $curRG.RESOURCEGROUPNAME + ' PBMM Policy for GoC",
-            "location": "' + $curRG.LOCATION + '",
-            "apiVersion": "2018-05-01",
-            "dependsOn": [
-                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
-            ],
-            "properties": {
-                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
-                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/89c6cddc-1c73-4ac1-b19c-54d1a15a42f2"
-                "assignIdentity": ""
-            }
-        },
-        {
-            "type": "Microsoft.Authorization/policyAssignments",
-            "name": "' + $curRG.RESOURCEGROUPNAME + ' Custom Ops Policy",
-            "location": "' + $curRG.LOCATION + '",
-            "apiVersion": "2018-05-01",
-            "dependsOn": [
-                "[resourceId(''Microsoft.Resources/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]"
-            ],
-            "properties": {
-                "scope": "[concat(subscription().id, ''/resourceGroups/'', ''' + $curRG.RESOURCEGROUPNAME + ''')]",
-                "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policyDefinitions'', ''GC PBMM Policy Set'')]",
-                "loganalytics": "/subscriptions/2a4beb17-e62e-4ded-9455-be61e92329e1/resourcegroups/core01-ops01-rgp/providers/microsoft.operationalinsights/workspaces/core01-law-main"
-            }
-        }
-    ],
-    "outputs": {}
+  $sLAWRG = GetLAWRG $curRG.LAWNAME
+  $sOutput = '
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {},
+  "variables": {
+      "location": "' + $curRG.LOCATION + '",
+      "subname": "' + $curRG.SUB + '",
+      "rgname": "' + $curRG.RESOURCEGROUPNAME + '",
+      "lawname": "' + $curRG.LAWNAME + '",
+      "lawrgname": "' + $sLAWRG + '",
+      "lawresourceid": "[concat(subscription().id, ''/resourcegroups/'', variables(''lawrgname''), ''/providers/microsoft.operationalinsights/workspaces/'', variables(''lawname''))]",
+      "Solution-Name": "' + $curRG.TSOLUTIONNAME + '",
+      "Environment": "' + $curRG.SUB + '",
+      "Solution-version": "' + $curRG.TSOLUTIONVERSION + '",
+      "Cost-Center": "' + $curRG.TCOSTCENTER + '",
+      "Business-Unit": "' + $curRG.TBUSINESSUNIT + '",
+      "Project-Name": "' + $curRG.TPROJECTNAME + '",
+      "Tech-Owner": "' + $curRG.TTECHOWNER + '",
+      "Exp-Date": "' + $curRG.TEXPDATE + '",
+      "Sensitivity": "' + $curRG.TSENSITIVITY + '",
+      "BusinessValueRating": "' + $curRG.TVALUERATING + '",
+      "TechContact": "' + $curRG.TTECHCONTACT + '",
+      "tagpolicyname": "[concat(''Tag Resources in '', variables(''subname''))]",
+      "OPSpolicyname": "[concat(''GC Ops Policy in '', variables(''subname''))]"
+
+  },
+  "resources": [
+      {
+          "apiVersion": "2018-05-01",
+          "type": "Microsoft.Resources/resourceGroups",
+          "location": "[variables(''location'')]",
+          "name": "[variables(''rgname'')]",
+          "properties": {},
+          "tags": {
+              "Solution-name": "[variables(''solution-name'')]",
+              "Environment": "[variables(''Environment'')]",
+              "Solution-version": "[variables(''solution-version'')]",
+              "Cost-Center": "[variables(''Cost-center'')]",
+              "Business-Unit": "[variables(''Business-unit'')]",
+              "Project-Name": "[variables(''Project-name'')]",
+              "Tech-Owner": "[variables(''Tech-Owner'')]",
+              "Exp-Date": "[variables(''Exp-Date'')]",
+              "Sensitivity": "[variables(''Sensitivity'')]",
+              "BusinessValueRating": "[variables(''BusinessValueRating'')]",
+              "TechContact": "[variables(''TechContact'')]"
+          }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2018-05-01",
+          "name": "PolicyAssignments",
+          "resourceGroup": "[variables(''rgName'')]",
+          "dependsOn": [
+              "[resourceId(''Microsoft.Resources/resourceGroups/'', variables(''rgName''))]"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {},
+                  "variables": {},
+                  "resources": [
+                      {
+                          "type": "Microsoft.Authorization/policyAssignments",
+                          "name": "[concat(variables(''rgname''), '' - Tag Policy Assignment'')]",
+                          "location": "[variables(''location'')]",
+                          "apiVersion": "2019-06-01",
+                          "properties": {
+                              "scope": "[concat(subscription().id, ''/resourceGroups/'', variables(''rgname''))]",
+                              "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policysetDefinitions'', variables(''tagpolicyname''))]",
+                              "displayName": "[concat(variables(''rgname''), '' Tag Policy Assignment'')]"
+                          },
+                          "identity": {
+                              "type": "SystemAssigned"
+                              }
+                      }
+                  ]
+              }
+          }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2018-05-01",
+          "name": "PolicyAssignments2",
+          "resourceGroup": "[variables(''rgName'')]",
+          "dependsOn": [
+              "[resourceId(''Microsoft.Resources/resourceGroups/'', variables(''rgName''))]"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {},
+                  "variables": {},
+                  "resources": [
+                      {
+                      "type": "Microsoft.Authorization/policyAssignments",
+                      "name": "[concat(variables(''rgname''), '' - '', variables(''OPSpolicyname''))]",
+                      "location": "[variables(''location'')]",
+                      "apiVersion": "2018-05-01",
+                      "properties": {
+                          "scope": "[concat(subscription().id, ''/resourceGroups/'', variables(''rgname''))]",
+                          "policyDefinitionId": "[resourceId(''Microsoft.Authorization/policysetDefinitions'', variables(''OPSpolicyname''))]",
+                          "displayname": "[concat(variables(''rgname''), '' '', variables(''OPSpolicyname''))]",
+                          "Parameters": {
+                              "listofallowedlocations": {
+                                  "value": [
+                                      "canadaeast",
+                                      "canadacentral",
+                                      "global"
+                                      ]
+                                  },
+                                  "LISTOFALLOWEDSKUS_1": {
+                                      "value": [
+                                        "Basic_A0",
+                                        "Basic_A1",
+                                        "Basic_A2",
+                                        "Basic_A3",
+                                        "Basic_A4",
+                                        "Standard_A0",
+                                        "Standard_A1",
+                                        "Standard_A1_v2",
+                                        "Standard_A10",
+                                        "Standard_A11",
+                                        "Standard_A2",
+                                        "Standard_A2_v2",
+                                        "Standard_A2m_v2",
+                                        "Standard_A3",
+                                        "Standard_A4",
+                                        "Standard_A4_v2",
+                                        "Standard_A4m_v2",
+                                        "Standard_A5",
+                                        "Standard_A6",
+                                        "Standard_A7",
+                                        "Standard_A8",
+                                        "Standard_A8_v2",
+                                        "Standard_A8m_v2",
+                                        "Standard_A9",
+                                        "Standard_B12ms",
+                                        "Standard_B16ms",
+                                        "Standard_B1ls",
+                                        "Standard_B1ms",
+                                        "Standard_B1s",
+                                        "Standard_B20ms",
+                                        "Standard_B2ms",
+                                        "Standard_B2s",
+                                        "Standard_B4ms",
+                                        "Standard_B8ms",
+                                        "Standard_D1",
+                                        "Standard_D1_v2",
+                                        "Standard_D11",
+                                        "Standard_D11_v2",
+                                        "Standard_D12",
+                                        "Standard_D12_v2",
+                                        "Standard_D13",
+                                        "Standard_D14",
+                                        "Standard_D14_v2",
+                                        "Standard_D15_v2",
+                                        "Standard_D2",
+                                        "Standard_D2_v2",
+                                        "Standard_D2_v3",
+                                        "Standard_D2s_v3",
+                                        "Standard_D3",
+                                        "Standard_D3_v2",
+                                        "Standard_D4",
+                                        "Standard_D4_v2",
+                                        "Standard_D4_v3",
+                                        "Standard_D5_v2",
+                                        "Standard_DS1",
+                                        "Standard_DS1_v2",
+                                        "Standard_DS2_v2",
+                                        "Standard_DS3_v2",
+                                        "Standard_DS4_v2",
+                                        "Standard_E2_v3",
+                                        "Standard_E4_v3",
+                                        "Standard_E8_v3",
+                                        "Standard_E2s_v3",
+                                        "Standard_E4s_v3",
+                                        "Standard_E8s_v3",
+                                        "Standard_F1",
+                                        "Standard_F1s",
+                                        "Standard_F2",
+                                        "Standard_F2s",
+                                        "Standard_F4",
+                                        "Standard_F4s",
+                                        "Standard_F8",
+                                        "Standard_F8s"
+                                      ]
+                                  },
+                                  "LISTOFALLOWEDSKUS_2": {
+                                      "value": [
+                                        "Premium_LRS",
+                                        "Premium_ZRS",
+                                        "Standard_GRS",
+                                        "Standard_GZRS",
+                                        "Standard_LRS",
+                                        "Standard_RAGRS",
+                                        "Standard_RAGZRS",
+                                        "Standard_ZRS"
+                                      ]
+                                  }
+                              }
+                          },
+                      "identity": {
+                              "type": "SystemAssigned"
+                              }
+                      }
+                  ]
+              }
+          }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2018-05-01",
+          "name": "PolicyAssignments3",
+          "resourceGroup": "[variables(''rgName'')]",
+          "dependsOn": [
+              "[resourceId(''Microsoft.Resources/resourceGroups/'', variables(''rgName''))]"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {},
+                  "variables": {},
+                  "resources": [
+                      {
+                  "type": "Microsoft.Authorization/policyAssignments",
+                      "name": "[concat(variables(''rgname''), '' PBMM Policy Set'')]",
+                      "apiVersion": "2019-01-01",
+                      "properties": {
+                          "displayname": "[concat(variables(''rgname''), '' PBMM Policy Set'')]",
+                          "scope": "[concat(subscription().id, ''/resourceGroups/'', variables(''rgname''))]",
+                          "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/4c4a5f27-de81-430b-b4e5-9cbd50595a87",
+                          "Parameters": {
+                              "logAnalyticsWorkspaceIdforVMReporting": {
+                                  "value": "[reference(variables(''lawresourceid''), ''2015-11-01-preview'').customerId]"                
+                                  },
+                              "listOfMembersToExcludeFromWindowsVMAdministratorsGroup": {
+                                  "value": "Guest"
+                                  },
+                              "listOfMembersToIncludeInWindowsVMAdministratorsGroup": {
+                                  "value": "VMAdministrator"
+                                  }
+                              }
+                          },
+                      "location": "[variables(''location'')]",
+                      "identity": {
+                              "type": "SystemAssigned"
+                              }
+                      
+                      }
+                  ]
+              }
+          }
+      }
+  ],
+  "outputs": {}
 }'
+
   return $sOutput
 }
 Function GetSubscriptionID {
@@ -954,6 +1138,17 @@ Function GetSubscriptionID {
         }
     } 
     return $sSUBID
+}
+Function GetLAWRG {
+  param ($sLawName)
+  #Retrieve the Subscription ID from the SUB worksheet based on the Subscription name.
+  $sLAWRG = "ERROR"
+  foreach ($curLAW in $sLAW) {
+      if ($curLAW.OMSWORKSPACENAME -eq $sLawName) {
+          $sLAWRG = $curLAW.RESOURCEGROUPNAME
+      }
+  } 
+  return $sLAWRG
 }
 function Format-Json([Parameter(Mandatory, ValueFromPipeline)][String] $json) {
   $indent = 0;
@@ -977,7 +1172,7 @@ Function BuildPowerShell {
   $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
 
   Write-Output "Deploying ' + $curName + ' in ' + $curObj.RESOURCEGROUPNAME + '"
-  New-AzResourceGroupDeployment -ResourceGroupName "' + $curObj.RESOURCEGROUPNAME + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '" '
+  New-AzResourceGroupDeployment -ResourceGroupName "' + $curObj.RESOURCEGROUPNAME + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '"'
 
   if ($curArgs) {$sOutput += $curArgs}
 
@@ -989,13 +1184,45 @@ Function BuildRGPowerShell {
   $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
 
   Write-Output "Deploying ' + $curName + ' in ' + $curObj.SUB + '"
-  New-AzDeployment -Name "' + $curObj.RESOURCEGROUPNAME + '" -Location "' + $curObj.LOCATION + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '" '
+  New-AzDeployment -Name "' + $curObj.RESOURCEGROUPNAME + '" -Location "' + $curObj.LOCATION + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '"'
 
   if ($curArgs) {$sOutput += $curArgs}
 
   return $sOutput
 }
+Function BuildGCOpsPolicyPowerShell {
+  param ($curSub)
+  $sOutput = 'Set-AzContext -Subscriptionid "' + $curSub.ID + '"
 
+  Write-Output "Creating GC Ops Policy in ' + $curSub.NAME + '"
+  $policydefinitions = "$($PSScriptRoot)\GCOPS.definitions.json"
+  $policysetparameters = "$($PSScriptRoot)\params-GCOPS.json"
+  New-AzPolicySetDefinition -Name "GC Ops Policy in ' + $curSub.NAME + '" -DisplayName "GC Ops Policy in ' + $curSub.NAME + '" -Description "Various security settings" -PolicyDefinition $policydefinitions -Parameter $policysetparameters'
+
+  return $sOutput
+}
+Function BuildTagsPolicyPowerShell {
+  param ($curSub)
+  $sOutput = 'Set-AzContext -Subscriptionid "' + $curSub.ID + '"
+
+  Write-Output "Creating Tags Policy in ' + $curSub.NAME + '"
+  $policydefinitions = "$($PSScriptRoot)\TAGS.definitions.json"
+  $policysetparameters = "$($PSScriptRoot)\params-TAGS.json"
+  New-AzPolicySetDefinition -Name "Tag Resources in ' + $curSub.NAME + '" -DisplayName "Tag Resources in ' + $curSub.NAME + '" -Description "Specify various tags values" -PolicyDefinition $policydefinitions'
+
+  return $sOutput
+}
+Function BuildFullDeployPowerShell {
+  param ($sData)
+  $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
+
+  Write-Output "Deploying ' + $curName + ' in ' + $curObj.SUB + '"
+  New-AzDeployment -Name "' + $curObj.RESOURCEGROUPNAME + '" -Location "' + $curObj.LOCATION + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '"'
+
+  if ($curArgs) {$sOutput += $curArgs}
+
+  return $sOutput
+}
 #endregion Functions
 
 #region Import-Excel
@@ -1081,6 +1308,23 @@ $sASR = Import-Excel $filename "ASR" -DataOnly -ErrorAction SilentlyContinue
 foreach ($curSUB in $sSUB) {
     Write-Output "Processing $($curSUB.NAME) $($curSUB.ID)"
 
+    #Create Policy Scripts and Templates
+    New-Item -ItemType Directory -Force -Path $sPOLOutPath | Out-Null
+    $sOutGCPSName = "$($sPOLOutPath)RUN-$($curSUB.NAME)-GCOPS-POLICY.ps1"
+    $sPOLPSOutput = BuildGCOpsPolicyPowerShell $curSUB
+    $sPOLPSOutput | Out-File $sOutGCPSName -Force
+    $sOutTagPSName = "$($sPOLOutPath)RUN-$($curSUB.NAME)-TAGS-POLICY.ps1"
+    $sPOLPSOutput = BuildTagsPolicyPowerShell $curSUB
+    $sPOLPSOutput | Out-File $sOutTagPSName -Force
+    $sPolicyOutput = Get-Content -Path "$($PSScriptRoot)\resources\params-GCOPS.json"
+    $sPolicyOutput | Out-File "$($outputfolder)\00-POL\params-GCOPS.json" -Force
+    $sPolicyOutput = Get-Content -Path "$($PSScriptRoot)\resources\GCOPS.definitions.json"
+    $sPolicyOutput | Out-File "$($outputfolder)\00-POL\GCOPS.definitions.json" -Force
+    $sPolicyOutput = Get-Content -Path "$($PSScriptRoot)\resources\params-TAGS.json"
+    $sPolicyOutput | Out-File "$($outputfolder)\00-POL\params-TAGS.json" -Force
+    $sPolicyOutput = Get-Content -Path "$($PSScriptRoot)\resources\TAGS.definitions.json"
+    $sPolicyOutput | Out-File "$($outputfolder)\00-POL\TAGS.definitions.json" -Force
+
     $iLAW = 0
     foreach ($curLAW in $sLAW) {
         if ($curLAW.SUB -eq $curSUB.NAME) {
@@ -1091,7 +1335,7 @@ foreach ($curSUB in $sSUB) {
             $sOutPSName = "$($sLAWOutPath)RUN-$($curLAW.OMSWORKSPACENAME).ps1"
             $sLAWOutput = Get-Content -Path "$($PSScriptRoot)\resources\ARM-LAW.json"
             $sLAWOutput | Out-File $sOutJsonName -Force
-            $sArgs = '-omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.OMSWORKSPACENAME + '"'
+            $sArgs = '-omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.LOCATION + '"'
             $sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
             $sLAWPSOutput | Out-File $sOutPSName -Force
             $iLAW += 1
