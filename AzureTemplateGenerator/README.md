@@ -31,7 +31,11 @@ Coming Soon:
 * **Key Vaults**
 * **DDOS**
 * **VM Templates with hardened DSC configurations**
-* **CICD Pipeline Samples**
+* **CICD DevOps Pipeline Examples**
+
+Todo List:
+* Code refactor
+* Move to parameter files rather than hardcoded template files. (more flexibility for CICD)
 
 ![Network Diagram Overview](./resources/readme_diagram_overview.png)
 
