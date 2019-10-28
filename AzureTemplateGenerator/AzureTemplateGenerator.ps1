@@ -65,8 +65,8 @@ $sScriptVersion = "1.0"
 $sScriptName = "Azure Template Generator"
 
 $sPOLOutPath = "$($outputfolder)00-POL\"
-$sRGOutPath = "$($outputfolder)01-RG\"
-$sLAWOutPath = "$($outputfolder)02-LAW\"
+$sLAWOutPath = "$($outputfolder)01-LAW\"
+$sRGOutPath = "$($outputfolder)02-RG\"
 $sNSGOutPath = "$($outputfolder)03-NSG\"
 $sRTOutPath = "$($outputfolder)04-RT\"
 $sVNETOutPath = "$($outputfolder)05-VNET\"
@@ -90,7 +90,6 @@ Write-Output "Generating ARM templates from $($filename)"
 #endregion INIT
 
 #region Functions
-
 Function parseNSGs() {
     param ($curNSG) 
         $sOutput = '{
@@ -137,8 +136,36 @@ Function parseNSGs() {
                 $iCount += 1
             }
         }
-            
-        $sOutput += ']}}]}'
+        
+        $sLAWNSG = GetLAWRG $curNSG.LAWNAME
+        $sOutput += ']}},
+        {
+          "apiVersion": "2017-05-01-preview",
+          "type": "Microsoft.Network/networksecuritygroups/providers/diagnosticSettings",
+          "name": "[concat(''' + $curNSG.NSGNAME + ''', ''/microsoft.insights/'', ''' + $curNSG.LAWNAME + ''')]",
+          "properties": {
+            "workspaceId": "[resourceId(''' + $sLAWNSG + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curNSG.LAWNAME + ''')]",
+            "logs": [
+              {
+                "category": "NetworkSecurityGroupEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              },
+              {
+                "category": "NetworkSecurityGroupRuleCounter",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              }            
+            ]
+          }
+        }]}'
+
         return $sOutput
 }
 Function parseRTs() {
@@ -225,7 +252,36 @@ Function parseVNETs() {
         }
     }
     #Set route table template footer JSON
-    $sOutput += ']}}]}'
+    $sLAWVNET = GetLAWRG $curVNET.LAWNAME
+    $sOutput += ']}},
+    {
+      "apiVersion": "2017-05-01-preview",
+      "type": "Microsoft.Network/virtualnetworks/providers/diagnosticSettings",
+      "name": "[concat(''' + $curVNET.VIRTUALNETWORKNAME + ''', ''/microsoft.insights/'', ''' + $curVNET.LAWNAME + ''')]",
+      "properties": {
+        "workspaceId": "[resourceId(''' + $sLAWVNET + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curVNET.LAWNAME + ''')]",
+        "logs": [
+          {
+            "category": "VMProtectionAlerts",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          }         
+        ],
+          "metrics": [
+            {
+              "category": "AllMetrics",
+              "enabled": true,
+              "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+            }
+          ]
+      }
+    }]}'
     return $sOutput
 }
 Function parsePEERs() {
@@ -477,12 +533,8 @@ Function parseAGs() {
     #"resourceGroup": "' + $curFW.RESOURCEGROUPNAME + '",
     #"subscriptionId": "' + $sSUBID + '",
     #Set application gateway template header JSON
-    foreach ($curLAW in $sLAW) {
-      if ($curLAW.OMSWORKSPACENAME -eq $curAG.LAWNAME) {
-        $sLAWOutput = $curLAW.RESOURCEGROUPNAME
-      }
-    }
 
+    $sLAWAG = GetLAWRG $curAG.LAWNAME
     $sOutput = '{
         "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
         "contentVersion": "1.0.0.0",
@@ -510,7 +562,7 @@ Function parseAGs() {
             "apiVersion": "2017-05-01-preview",
             "properties": {
               "name": "[concat(''' + $curAG.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
-              "workspaceId": "[resourceId(''' + $sLAWOutput + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
+              "workspaceId": "[resourceId(''' + $sLAWAG + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
               "logs": [
                 {
                   "category": "DDoSProtectionNotifications",
@@ -649,7 +701,7 @@ Function parseAGs() {
           "type": "Microsoft.Network/applicationgateways/providers/diagnosticSettings",
           "name": "[concat(''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
           "properties": {
-            "workspaceId": "[resourceId(''' + $sLAWOutput + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
+            "workspaceId": "[resourceId(''' + $sLAWAG + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
             "logs": [
               {
                 "category": "ApplicationGatewayAccessLog",
@@ -1335,8 +1387,9 @@ foreach ($curSUB in $sSUB) {
             $sOutPSName = "$($sLAWOutPath)RUN-$($curLAW.OMSWORKSPACENAME).ps1"
             $sLAWOutput = Get-Content -Path "$($PSScriptRoot)\resources\ARM-LAW.json"
             $sLAWOutput | Out-File $sOutJsonName -Force
-            $sArgs = '-omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.LOCATION + '"'
-            $sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
+            $sArgs = ' -omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.LOCATION + '"'
+            #$sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
+            $sLAWPSOutput = BuildRGPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
             $sLAWPSOutput | Out-File $sOutPSName -Force
             $iLAW += 1
         }
@@ -1368,7 +1421,7 @@ foreach ($curSUB in $sSUB) {
             $sOutFileName = "ARM-$($curNSG.NSGNAME).json"
             $sOutJsonName = $($sNSGOutPath) + $sOutFileName
             $sOutPSName = "$($sNSGOutPath)RUN-$($curNSG.NSGNAME).ps1"
-            $sNSGOutput = parseNSGs($curNSG)
+            $sNSGOutput = parseNSGs($curNSG) | Format-Json
             $sNSGOutput | Out-File $sOutJsonName -Force
             $sNSGPSOutput = BuildPowerShell $curNSG $curNSG.NSGNAME $sOutFileName
             $sNSGPSOutput | Out-File $sOutPSName -Force
@@ -1401,7 +1454,7 @@ foreach ($curSUB in $sSUB) {
             # EXCELHEADERS: SUB REGION LOCATION VIRTUALNETWORKNAME RESOURCEGROUPNAME ROUTETABLENAME NSGNAME
             New-Item -ItemType Directory -Force -Path $sVNETOutPath | Out-Null
             $sOutFileName = "ARM-$($curVNET.VIRTUALNETWORKNAME).json"
-            $sOutJsonName = $($sRTOutPath) + $sOutFileName
+            $sOutJsonName = $($sVNETOutPath) + $sOutFileName
             $sOutPSName = "$($sVNETOutPath)RUN-$($curVNET.VIRTUALNETWORKNAME).ps1"
             $sVNETOutput = parseVNETs($curVNET)
             $sVNETOutput | Out-File $sOutJsonName -Force
