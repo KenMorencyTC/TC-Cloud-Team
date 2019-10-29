@@ -14,20 +14,6 @@
             "metadata": {
                 "description": "Specify the region for your Workspace"
             }
-        },
-        "resourceGroupName": {
-            "type": "string",
-            "defaultValue": "CORE-LAW-RGP",
-            "metadata": {
-                "description": "Specify the name for the Resource Group"
-            }
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "CanadaCentral",
-            "metadata": {
-                "description": "Specify the region for Resource Group"
-            }
         }
     },
     "variables": {
@@ -65,12 +51,6 @@
         }
     },
     "resources": [
-        {
-            "apiVersion": "2018-05-01",
-            "type": "Microsoft.Resources/resourceGroups",
-            "location": "[parameters('location')]",
-            "name": "[parameters('resourceGroupName')]"
-        },
         {
             "apiVersion": "2017-03-15-preview",
             "location": "[parameters('omsWorkspaceRegion')]",

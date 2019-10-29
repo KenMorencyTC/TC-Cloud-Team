@@ -349,6 +349,7 @@ Function parsePEERs() {
 Function parseFWs() {
     param ($curFW)
     #Set firewall template header JSON
+    $sLAWFW = GetLAWRG $curFW.LAWNAME
     $sOutput = '{
         "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
         "contentVersion": "1.0.0.0",
@@ -356,7 +357,7 @@ Function parseFWs() {
         "variables": {},
         "resources": [
         {
-            "apiVersion": "2018-10-01",
+            "apiVersion": "2019-04-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "' + $curFW.PUBLICIPNAME + '",
             "location": "' + $curFW.LOCATION + '",
@@ -367,6 +368,46 @@ Function parseFWs() {
               "publicIPAllocationMethod": "Static",
               "publicIPAddressVersion": "IPv4"
             }
+          },
+          {
+            "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
+            "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
+            "apiVersion": "2017-05-01-preview",
+            "properties": {
+              "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",          
+              "workspaceId": "[resourceId(''' + $sLAWFW + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
+              "logs": [
+                {
+                  "category": "DDoSProtectionNotifications",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                },
+                {
+                  "category": "DDoSMitigationReports",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                }
+              ],
+              "metrics": [
+                {
+                  "category": "AllMetrics",
+                  "enabled": true,
+                  "retentionPolicy": {
+                    "days": 0,
+                    "enabled": false
+                  }
+                }
+              ]
+            },
+            "dependsOn": [
+              "[resourceId(''Microsoft.Network/publicIPAddresses'', ''' + $curFW.PUBLICIPNAME + ''')]"
+            ]
           },
           {
             "apiVersion": "2019-04-01",
@@ -495,7 +536,44 @@ Function parseFWs() {
     }
     $sOutput += ']'
     #Set firewall template footer JSON
-    $sOutput += '}}]}'
+    $sOutput += '}},
+    {
+      "apiVersion": "2017-05-01-preview",
+      "type": "Microsoft.Network/Azurefirewalls/providers/diagnosticSettings",
+      "name": "[concat(''' + $curFW.NAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
+      "properties": {
+        "workspaceId": "[resourceId(''' + $sLAWFW + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
+        "logs": [
+          {
+            "category": "AzureFirewallApplicationRule",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          },
+          {
+            "category": "AzureFirewallNetworkRule",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          }          
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          }
+        ]
+      }
+    }
+    ]}'
     return $sOutput
 }
 Function parseSAs() {
@@ -916,7 +994,7 @@ Function parseRGs() {
   $sLAWRG = GetLAWRG $curRG.LAWNAME
   $sOutput = '
 {
-  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {},
   "variables": {
@@ -1260,18 +1338,7 @@ Function BuildTagsPolicyPowerShell {
   Write-Output "Creating Tags Policy in ' + $curSub.NAME + '"
   $policydefinitions = "$($PSScriptRoot)\TAGS.definitions.json"
   $policysetparameters = "$($PSScriptRoot)\params-TAGS.json"
-  New-AzPolicySetDefinition -Name "Tag Resources in ' + $curSub.NAME + '" -DisplayName "Tag Resources in ' + $curSub.NAME + '" -Description "Specify various tags values" -PolicyDefinition $policydefinitions'
-
-  return $sOutput
-}
-Function BuildFullDeployPowerShell {
-  param ($sData)
-  $sOutput = 'Set-AzContext -Subscriptionid "' + $sSubID + '"
-
-  Write-Output "Deploying ' + $curName + ' in ' + $curObj.SUB + '"
-  New-AzDeployment -Name "' + $curObj.RESOURCEGROUPNAME + '" -Location "' + $curObj.LOCATION + '" -TemplateFile "$($PSScriptRoot)\' + $curFile + '"'
-
-  if ($curArgs) {$sOutput += $curArgs}
+  New-AzPolicySetDefinition -Name "Tag Resources in ' + $curSub.NAME + '" -DisplayName "Tag Resources in ' + $curSub.NAME + '" -Description "Specify various tags values" -PolicyDefinition $policydefinitions -Parameter $policysetparameters'
 
   return $sOutput
 }
@@ -1385,12 +1452,40 @@ foreach ($curSUB in $sSUB) {
             $sOutFileName = "ARM-$($curLAW.OMSWORKSPACENAME).json"
             $sOutJsonName = $($sLAWOutPath) + $sOutFileName
             $sOutPSName = "$($sLAWOutPath)RUN-$($curLAW.OMSWORKSPACENAME).ps1"
+            
             $sLAWOutput = Get-Content -Path "$($PSScriptRoot)\resources\ARM-LAW.json"
             $sLAWOutput | Out-File $sOutJsonName -Force
             $sArgs = ' -omsworkspacename "' + $curLAW.OMSWORKSPACENAME + '" -omsworkspaceregion "' + $curLAW.LOCATION + '"'
             #$sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
-            $sLAWPSOutput = BuildRGPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
+            $sLAWPSOutput = BuildPowerShell $curLAW $curLAW.OMSWORKSPACENAME $sOutFileName $sArgs
             $sLAWPSOutput | Out-File $sOutPSName -Force
+
+            #Build LAW Resource Groups (needed)
+            $sLAWRGOutput = '{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {},
+  "variables": {
+      "location": "' + $curLAW.LOCATION + '",
+      "rgname": "' + $curLAW.RESOURCEGROUPNAME + '"
+  },
+  "resources": [
+      {
+          "apiVersion": "2018-05-01",
+          "type": "Microsoft.Resources/resourceGroups",
+          "location": "[variables(''location'')]",
+          "name": "[variables(''rgname'')]",
+          "properties": {}
+      }
+  ],
+  "outputs": {}
+}'
+            $sOutLAWRGFileName = "ARM-$($curLAW.RESOURCEGROUPNAME).json"
+            $sOutLAWRGJsonName = $($sLAWOutPath) + $sOutLAWRGFileName
+            $sLAWRGOutput | Out-File $sOutLAWRGJsonName -Force
+            $sOutLAWRGPSName = "$($sLAWOutPath)RUN-$($curLAW.RESOURCEGROUPNAME).ps1"
+            $sLAWRGPSOutput = BuildRGPowerShell $curLAW $curLAW.RESOURCEGROUPNAME $sOutLAWRGFileName
+            $sLAWRGPSOutput | Out-File $sOutLAWRGPSName -Force
             $iLAW += 1
         }
     }
