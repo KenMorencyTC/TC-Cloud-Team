@@ -237,19 +237,49 @@ Function parseVNETs() {
             if ($iCount -gt 0) {
                 $sOutput += ',' #Add comma prefix if not 1st object.
             }
+            $mySUB = switch ( $curSUBNET.SUBNETNAME )
+            {
+              "GATEWAYSUBNET" {
+                $sOutput += '{
+                  "name": "' + $curSUBNET.SUBNETNAME + '",
+                  "properties": {
+                      "addressPrefix": "' + $curSUBNET.SUBNETPREFIX + '",
+                  }
+                  }'
+              }
+              "APPGATEWAYSUBNET" {
+                $sOutput += '{
+                  "name": "' + $curSUBNET.SUBNETNAME + '",
+                  "properties": {
+                      "addressPrefix": "' + $curSUBNET.SUBNETPREFIX + '"
+                  }
+                  }'
+              }
+              "AZUREFIREWALLSUBNET" {
+                $sOutput += '{
+                  "name": "' + $curSUBNET.SUBNETNAME + '",
+                  "properties": {
+                      "addressPrefix": "' + $curSUBNET.SUBNETPREFIX + '"
+                  }
+                  }'
+              }
+              default {
+                $sOutput += '{
+                  "name": "' + $curSUBNET.SUBNETNAME + '",
+                  "properties": {
+                      "addressPrefix": "' + $curSUBNET.SUBNETPREFIX + '",
+                      "networkSecurityGroup": {
+                      "id": "[resourceId(''' + $curSUBNET.RESOURCEGROUPNAME + ''', ''Microsoft.Network/networkSecurityGroups/'', ''' + $curVNET.NSGNAME + ''')]"
+                      },
+                      "routeTable": {
+                      "id": "[resourceId(''' + $curSUBNET.RESOURCEGROUPNAME + ''', ''Microsoft.Network/routeTables'', ''' + $curVNET.ROUTETABLENAME + ''')]"
+                      }
+                  }
+                  }'
+              }
+            }
             #Generate subnet template JSON.
-            $sOutput += '{
-                "name": "' + $curSUBNET.SUBNETNAME + '",
-                "properties": {
-                    "addressPrefix": "' + $curSUBNET.SUBNETPREFIX + '",
-                    "networkSecurityGroup": {
-                    "id": "[resourceId(''' + $curSUBNET.RESOURCEGROUPNAME + ''', ''Microsoft.Network/networkSecurityGroups/'', ''' + $curVNET.NSGNAME + ''')]"
-                    },
-                    "routeTable": {
-                    "id": "[resourceId(''' + $curSUBNET.RESOURCEGROUPNAME + ''', ''Microsoft.Network/routeTables'', ''' + $curVNET.ROUTETABLENAME + ''')]"
-                    }
-                }
-                }'
+           
             $iCount += 1
         }
     }
