@@ -122,7 +122,6 @@ Function parseNSGs() {
                     "name": "' + $curRULESET.RULENAME + '",
                     "properties": {
                         "description": "' + $curRULESET.DESCRIPTION + '",
-                        "type": "' + $curRULESET.TYPE + '",
                         "protocol": "' + $curRULESET.PROTOCOL + '",
                         "sourcePortRange": "' + $curRULESET.SOURCE + '",
                         "destinationPortRange": "' + $curRULESET.DESTINATION + '",
@@ -143,6 +142,9 @@ Function parseNSGs() {
           "apiVersion": "2017-05-01-preview",
           "type": "Microsoft.Network/networksecuritygroups/providers/diagnosticSettings",
           "name": "[concat(''' + $curNSG.NSGNAME + ''', ''/microsoft.insights/'', ''' + $curNSG.LAWNAME + ''')]",
+          "dependsOn": [
+                "[resourceid(''Microsoft.Network/networkSecurityGroups'', ''' + $curNSG.NSGNAME + ''')]"
+            ],
           "properties": {
             "workspaceId": "[resourceId(''' + $sLAWNSG + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curNSG.LAWNAME + ''')]",
             "logs": [
@@ -258,6 +260,9 @@ Function parseVNETs() {
       "apiVersion": "2017-05-01-preview",
       "type": "Microsoft.Network/virtualnetworks/providers/diagnosticSettings",
       "name": "[concat(''' + $curVNET.VIRTUALNETWORKNAME + ''', ''/microsoft.insights/'', ''' + $curVNET.LAWNAME + ''')]",
+      "dependsOn": [
+                "[resourceid(''Microsoft.Network/virtualNetworks'', ''' + $curVNET.VIRTUALNETWORKNAME + ''')]"
+            ],
       "properties": {
         "workspaceId": "[resourceId(''' + $sLAWVNET + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curVNET.LAWNAME + ''')]",
         "logs": [
@@ -373,6 +378,9 @@ Function parseFWs() {
             "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
             "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
             "apiVersion": "2017-05-01-preview",
+            "dependsOn": [
+                "[resourceid(''Microsoft.Network/publicIPAddresses'', ''' + $curFW.PUBLICIPNAME + ''')]"
+            ],
             "properties": {
               "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",          
               "workspaceId": "[resourceId(''' + $sLAWFW + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
@@ -541,6 +549,9 @@ Function parseFWs() {
       "apiVersion": "2017-05-01-preview",
       "type": "Microsoft.Network/Azurefirewalls/providers/diagnosticSettings",
       "name": "[concat(''' + $curFW.NAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
+      "dependsOn": [
+                "[resourceid(''Microsoft.Network/azureFirewalls'', ''' + $curFW.NAME + ''')]"
+            ],
       "properties": {
         "workspaceId": "[resourceId(''' + $sLAWFW + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
         "logs": [
@@ -637,6 +648,9 @@ Function parseAGs() {
                {
             "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
             "name": "[concat(''' + $curAG.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
+            "dependsOn": [
+                "[resourceid(''Microsoft.Network/publicIPAddresses'', ''' + $curAG.PUBLICIPNAME + ''')]"
+            ],
             "apiVersion": "2017-05-01-preview",
             "properties": {
               "name": "[concat(''' + $curAG.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
@@ -778,6 +792,9 @@ Function parseAGs() {
           "apiVersion": "2017-05-01-preview",
           "type": "Microsoft.Network/applicationgateways/providers/diagnosticSettings",
           "name": "[concat(''' + $curAG.APPLICATIONGATEWAYNAME + ''', ''/microsoft.insights/'', ''' + $curAG.LAWNAME + ''')]",
+          "dependsOn": [
+                "[resourceid(''Microsoft.Network/applicationGateways'', ''' + $curAG.APPLICATIONGATEWAYNAME + ''')]"
+            ],
           "properties": {
             "workspaceId": "[resourceId(''' + $sLAWAG + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curAG.LAWNAME + ''')]",
             "logs": [
@@ -847,6 +864,9 @@ Function parseRSVs() {
   {
     "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticSettings",
     "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",
+    "dependsOn": [
+                "[resourceid(''Microsoft.Network/recoveryServices/vaults'', ''' + $curRSV.VAULTNAME + ''')]"
+            ],
     "apiVersion": "2017-05-01-preview",
     "properties": {
       "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",          
