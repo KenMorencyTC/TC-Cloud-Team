@@ -37,6 +37,7 @@ Todo List:
 * Code refactor
 * Move to parameter files rather than hardcoded template files. (more flexibility for CICD)
 
+
 ![Network Diagram Overview](./resources/readme_diagram_overview.png)
 
 ## What do I do with this?
@@ -44,6 +45,10 @@ Todo List:
 First off you will need to either create the azure subscriptions you see in the **"SUB"** worksheet and enter the corresponding IDs into the fields provided **OR** you will need to modify the entire excel workbook to suit the subscriptions/infrastructure you wish to use. 
 
 ![Subscription Worksheet](./resources/readme_subs.png)
+
+You will also need to specify your own custom and unique names for Log Analytics Workspaces (LAW tab) and Storage Accounts (SA tab)
+
+![LAW Worksheet](./resources/readme_law.png) ![SA Worksheet](./resources/readme_sa.png)
 
 Once you execute the generator you will find a new folder called **"ARM"** in your directory with several folders and files inside.
 ![Powershell generation of scripts](./resources/readme_psgen.png)
