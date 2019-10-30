@@ -1,5 +1,7 @@
 ([Français](#gc-fr))
 
+# MOVING SOON TO https://github.com/canada-ca/accelerators_accelerateurs-azure
+
 # TC Azure Template Generator
 
 **A kickstart for your PBMM Cloud!**
