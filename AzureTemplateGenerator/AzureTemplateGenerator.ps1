@@ -343,14 +343,15 @@ Function parsePEERs() {
                 $sOutput += ',' #Add comma prefix if not 1st object.
             }
             #Generate vnet peering template JSON.
+            <#"dependsOn": [
+                "[resourceId(''' + $curSUB.ID + ''', ''' + $curVNET.RESOURCEGROUPNAME + 
+                ''', ''Microsoft.Network/virtualNetworks'', ''' + $sVNETName + ''')]"
+            ],#>
             $sOutput += '{
                 "apiVersion": "2017-06-01",
                 "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-                "name": "' + $sVNETName + '/peering-to-' + $curPEER.REMOTERESOURCEGROUPNAME + '",
+                "name": "' + $sVNETName + '/peering-to-' + $curPEER.REMOTEVIRTUALNETWORKNAME + '",
                 "location": "' + $curVNET.LOCATION + '",
-                "dependsOn": [
-                "[resourceid(''Microsoft.Network/virtualNetworks'', ''' + $sVNETName + ''')]"
-            ],
                 "properties": {
                 "allowVirtualNetworkAccess": ' + $curPEER.ALLOWVIRTUALNETWORKACCESS + ',
                 "allowForwardedTraffic": ' + $curPEER.ALLOWFORWARDEDTRAFFIC + ',
@@ -408,9 +409,6 @@ Function parseFWs() {
             "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
             "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
             "apiVersion": "2017-05-01-preview",
-            "dependsOn": [
-                "[resourceid(''Microsoft.Network/publicIPAddresses'', ''' + $curFW.PUBLICIPNAME + ''')]"
-            ],
             "properties": {
               "name": "[concat(''' + $curFW.PUBLICIPNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",          
               "workspaceId": "[resourceId(''' + $sLAWFW + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
@@ -495,9 +493,14 @@ Function parseFWs() {
                     "description": "' + $curFWRULE.DESCRIPTION + '",
                     "sourceAddresses": [ ' + $curFWRULE.SOURCEADDRESSES + '],
                     "protocols": [{' + $curFWRULE.PROTOCOLS + '}],
-                    "targetFqdns": [' + $curFWRULE.TARGETFQDNS + '],
-                    "fqdnTags": [' + $curFWRULE.FQDNTAGS + ']
-                  }
+                    '
+                    if ($curFWRULE.TARGETFQDNS) {
+                      $sOutput += '"targetFqdns": [' + $curFWRULE.TARGETFQDNS + ']'
+                    } else {
+                      $sOutput += '"fqdnTags": [' + $curFWRULE.FQDNTAGS + ']'
+                    }
+
+                  $sOutput += '}
                 ]
               }
             }'
@@ -527,11 +530,11 @@ Function parseFWs() {
                     "name": "' + $curFWRULE.RULENAME + '",
                     "description": "' + $curFWRULE.DESCRIPTION + '",
                     "sourceAddresses": [' + $curFWRULE.SOURCEADDRESSES + '],
-                    "destinationAddresses": [' + $curFWRULE.DESTINATIONADDRESSES + '],
+                    "destinationAddresses": "[array(reference(resourceId(''Microsoft.Network/publicIPAddresses'', ''' + $curFW.PUBLICIPNAME + ''')).ipAddress)]",
                     "destinationPorts": [' + $curFWRULE.DESTINATIONPORTS + '],
                     "protocols": [' + $curFWRULE.PROTOCOLS + '],
-                    "translatedAddress": ["' + $curFWRULE.TRANSLATEDADDRESS + '"],
-                    "translatedPort": ["' + $curFWRULE.TRANSLATEDPORT + '"]
+                    "translatedAddress": "' + $curFWRULE.TRANSLATEDADDRESS + '",
+                    "translatedPort": "' + $curFWRULE.TRANSLATEDPORT + '"
                   }
                 ]
               }
@@ -578,9 +581,9 @@ Function parseFWs() {
     {
       "apiVersion": "2017-05-01-preview",
       "type": "Microsoft.Network/Azurefirewalls/providers/diagnosticSettings",
-      "name": "[concat(''' + $curFW.NAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
+      "name": "[concat(''' + $curFW.FIREWALLNAME + ''', ''/microsoft.insights/'', ''' + $curFW.LAWNAME + ''')]",
       "dependsOn": [
-                "[resourceid(''Microsoft.Network/azureFirewalls'', ''' + $curFW.NAME + ''')]"
+                "[resourceid(''Microsoft.Network/azureFirewalls'', ''' + $curFW.FIREWALLNAME + ''')]"
             ],
       "properties": {
         "workspaceId": "[resourceId(''' + $sLAWFW + ''', ''microsoft.operationalinsights/workspaces/'', ''' + $curFW.LAWNAME + ''')]",
@@ -872,6 +875,7 @@ Function parseAGs() {
 }
 Function parseRSVs() {
     param ($curRSV) 
+    $sLAWRG = GetLAWRG $curRSV.LAWNAME
     $sOutput = '
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
@@ -894,13 +898,10 @@ Function parseRSVs() {
   {
     "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticSettings",
     "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",
-    "dependsOn": [
-                "[resourceid(''Microsoft.Network/recoveryServices/vaults'', ''' + $curRSV.VAULTNAME + ''')]"
-            ],
     "apiVersion": "2017-05-01-preview",
     "properties": {
       "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/microsoft.insights/'', ''' + $curRSV.LAWNAME + ''')]",          
-      "workspaceId": "[resourceId(''' + $curRSV.RESOURCEGROUPNAME + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curRSV.LAWNAME + ''')]",
+      "workspaceId": "[resourceId(''' + $sLAWRG + ''',''microsoft.operationalinsights/workspaces/'', ''' + $curRSV.LAWNAME + ''')]",
       "logs": ['
           $tASR = $curRSV.ASR | Out-String
           $aASR = $tASR.Split(",")
@@ -933,7 +934,7 @@ Function parseRSVs() {
       "metrics": [' + $curRSV.METRICS + ']
           },
           "dependsOn": [
-              "[resourceId(''Microsoft.RecoveryServices/vaults/'', ''' + $curRSV.VAULTNAME + ''')]"
+              "[concat(''Microsoft.RecoveryServices/vaults/'', ''' + $curRSV.VAULTNAME + ''')]"
           ]
     }'
         }
@@ -943,7 +944,7 @@ Function parseRSVs() {
           $sOutput += '
     {
       "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
-      "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''' + $curRSV.POLICYNAME + ''')]",
+      "name": "[concat(''' + $curRSV.VAULTNAME + ''', ''/'' , ''' + $curRSV.POLICYNAME + ''')]",
       "apiVersion": "2016-06-01",
       "location": "' + $curRSV.LOCATION + '",
       "dependsOn": [
